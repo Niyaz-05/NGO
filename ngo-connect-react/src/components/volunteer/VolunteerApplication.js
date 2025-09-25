@@ -1,40 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
+import { volunteerAPI } from "../../services/api";
+import { toast } from "react-toastify";
 
 const VolunteerApplication = ({ opportunity, onBack }) => {
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    address: '',
-    experience: '',
-    motivation: '',
-    availability: '',
-    emergencyContact: '',
-    emergencyPhone: '',
+    fullName: "",
+    email: "",
+    phone: "",
+    address: "",
+    experience: "",
+    motivation: "",
+    availability: "",
+    emergencyContact: "",
+    emergencyPhone: "",
     skills: [],
-    additionalInfo: ''
+    additionalInfo: "",
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const availableSkills = [
-    'Teaching', 'Leadership', 'Communication', 'First Aid', 'Event Planning',
-    'Social Media', 'Photography', 'Translation', 'Cooking', 'Driving',
-    'Technical Support', 'Fundraising', 'Counseling', 'Research', 'Writing'
+    "Teaching",
+    "Leadership",
+    "Communication",
+    "First Aid",
+    "Event Planning",
+    "Social Media",
+    "Photography",
+    "Translation",
+    "Cooking",
+    "Driving",
+    "Technical Support",
+    "Fundraising",
+    "Counseling",
+    "Research",
+    "Writing",
   ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors({
         ...errors,
-        [name]: ''
+        [name]: "",
       });
     }
   };
@@ -43,8 +57,8 @@ const VolunteerApplication = ({ opportunity, onBack }) => {
     setFormData({
       ...formData,
       skills: formData.skills.includes(skill)
-        ? formData.skills.filter(s => s !== skill)
-        : [...formData.skills, skill]
+        ? formData.skills.filter((s) => s !== skill)
+        : [...formData.skills, skill],
     });
   };
 
@@ -52,41 +66,41 @@ const VolunteerApplication = ({ opportunity, onBack }) => {
     const newErrors = {};
 
     if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
+      newErrors.fullName = "Full name is required";
     }
 
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = "Please enter a valid email address";
     }
 
     if (!formData.phone) {
-      newErrors.phone = 'Phone number is required';
+      newErrors.phone = "Phone number is required";
     }
 
     if (!formData.address.trim()) {
-      newErrors.address = 'Address is required for volunteering logistics';
+      newErrors.address = "Address is required for volunteering logistics";
     }
 
     if (!formData.experience.trim()) {
-      newErrors.experience = 'Please describe your relevant experience';
+      newErrors.experience = "Please describe your relevant experience";
     }
 
     if (!formData.motivation.trim()) {
-      newErrors.motivation = 'Please explain your motivation to volunteer';
+      newErrors.motivation = "Please explain your motivation to volunteer";
     }
 
     if (!formData.availability.trim()) {
-      newErrors.availability = 'Please specify your availability';
+      newErrors.availability = "Please specify your availability";
     }
 
     if (!formData.emergencyContact.trim()) {
-      newErrors.emergencyContact = 'Emergency contact name is required';
+      newErrors.emergencyContact = "Emergency contact name is required";
     }
 
     if (!formData.emergencyPhone) {
-      newErrors.emergencyPhone = 'Emergency contact phone is required';
+      newErrors.emergencyPhone = "Emergency contact phone is required";
     }
 
     setErrors(newErrors);
@@ -97,12 +111,50 @@ const VolunteerApplication = ({ opportunity, onBack }) => {
     e.preventDefault();
     if (validateForm()) {
       setIsSubmitting(true);
-      // Simulate application submission
-      setTimeout(() => {
-        alert('Application submitted successfully! You will be contacted soon.');
+
+      try {
+        // Get current user from localStorage
+        const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+
+        // Prepare application data
+        const applicationData = {
+          opportunityId: opportunity.id,
+          volunteerId: currentUser.id,
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          experience: formData.experience,
+          motivation: formData.motivation,
+          availability: formData.availability,
+          emergencyContact: formData.emergencyContact,
+          emergencyPhone: formData.emergencyPhone,
+          skills: formData.skills,
+          additionalInfo: formData.additionalInfo,
+        };
+
+        const response = await volunteerAPI.applyForOpportunity(
+          opportunity.id,
+          applicationData
+        );
+
+        if (response.data.success) {
+          toast.success(
+            "Application submitted successfully! You will be contacted soon."
+          );
+          onBack();
+        } else {
+          toast.error(response.data.message || "Failed to submit application");
+        }
+      } catch (error) {
+        console.error("Error submitting application:", error);
+        toast.error(
+          error.response?.data?.message ||
+            "Failed to submit application. Please try again."
+        );
+      } finally {
         setIsSubmitting(false);
-        onBack();
-      }, 2000);
+      }
     }
   };
 
@@ -120,25 +172,33 @@ const VolunteerApplication = ({ opportunity, onBack }) => {
                   <label className="form-label">Full Name *</label>
                   <input
                     type="text"
-                    className={`form-control ${errors.fullName ? 'is-invalid' : ''}`}
+                    className={`form-control ${
+                      errors.fullName ? "is-invalid" : ""
+                    }`}
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
                     required
                   />
-                  {errors.fullName && <div className="invalid-feedback">{errors.fullName}</div>}
+                  {errors.fullName && (
+                    <div className="invalid-feedback">{errors.fullName}</div>
+                  )}
                 </div>
                 <div className="col-md-6">
                   <label className="form-label">Email Address *</label>
                   <input
                     type="email"
-                    className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                    className={`form-control ${
+                      errors.email ? "is-invalid" : ""
+                    }`}
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
                     required
                   />
-                  {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                  {errors.email && (
+                    <div className="invalid-feedback">{errors.email}</div>
+                  )}
                 </div>
               </div>
 
@@ -147,33 +207,45 @@ const VolunteerApplication = ({ opportunity, onBack }) => {
                   <label className="form-label">Phone Number *</label>
                   <input
                     type="tel"
-                    className={`form-control ${errors.phone ? 'is-invalid' : ''}`}
+                    className={`form-control ${
+                      errors.phone ? "is-invalid" : ""
+                    }`}
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
                     required
                   />
-                  {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
+                  {errors.phone && (
+                    <div className="invalid-feedback">{errors.phone}</div>
+                  )}
                 </div>
                 <div className="col-md-6">
                   <label className="form-label">Availability *</label>
                   <input
                     type="text"
-                    className={`form-control ${errors.availability ? 'is-invalid' : ''}`}
+                    className={`form-control ${
+                      errors.availability ? "is-invalid" : ""
+                    }`}
                     name="availability"
                     value={formData.availability}
                     onChange={handleChange}
                     placeholder="e.g., Weekends, 2-4 PM"
                     required
                   />
-                  {errors.availability && <div className="invalid-feedback">{errors.availability}</div>}
+                  {errors.availability && (
+                    <div className="invalid-feedback">
+                      {errors.availability}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="mb-3">
                 <label className="form-label">Address *</label>
                 <textarea
-                  className={`form-control ${errors.address ? 'is-invalid' : ''}`}
+                  className={`form-control ${
+                    errors.address ? "is-invalid" : ""
+                  }`}
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
@@ -181,13 +253,17 @@ const VolunteerApplication = ({ opportunity, onBack }) => {
                   placeholder="Enter your full address for volunteering logistics"
                   required
                 />
-                {errors.address && <div className="invalid-feedback">{errors.address}</div>}
+                {errors.address && (
+                  <div className="invalid-feedback">{errors.address}</div>
+                )}
               </div>
 
               <div className="mb-3">
                 <label className="form-label">Relevant Experience *</label>
                 <textarea
-                  className={`form-control ${errors.experience ? 'is-invalid' : ''}`}
+                  className={`form-control ${
+                    errors.experience ? "is-invalid" : ""
+                  }`}
                   name="experience"
                   value={formData.experience}
                   onChange={handleChange}
@@ -195,13 +271,17 @@ const VolunteerApplication = ({ opportunity, onBack }) => {
                   placeholder="Describe your relevant volunteer or work experience"
                   required
                 />
-                {errors.experience && <div className="invalid-feedback">{errors.experience}</div>}
+                {errors.experience && (
+                  <div className="invalid-feedback">{errors.experience}</div>
+                )}
               </div>
 
               <div className="mb-3">
                 <label className="form-label">Motivation *</label>
                 <textarea
-                  className={`form-control ${errors.motivation ? 'is-invalid' : ''}`}
+                  className={`form-control ${
+                    errors.motivation ? "is-invalid" : ""
+                  }`}
                   name="motivation"
                   value={formData.motivation}
                   onChange={handleChange}
@@ -209,13 +289,17 @@ const VolunteerApplication = ({ opportunity, onBack }) => {
                   placeholder="Why do you want to volunteer for this opportunity?"
                   required
                 />
-                {errors.motivation && <div className="invalid-feedback">{errors.motivation}</div>}
+                {errors.motivation && (
+                  <div className="invalid-feedback">{errors.motivation}</div>
+                )}
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Skills (Select all that apply)</label>
+                <label className="form-label">
+                  Skills (Select all that apply)
+                </label>
                 <div className="row">
-                  {availableSkills.map(skill => (
+                  {availableSkills.map((skill) => (
                     <div key={skill} className="col-md-3 col-sm-4 col-6 mb-2">
                       <div className="form-check">
                         <input
@@ -239,25 +323,39 @@ const VolunteerApplication = ({ opportunity, onBack }) => {
                   <label className="form-label">Emergency Contact Name *</label>
                   <input
                     type="text"
-                    className={`form-control ${errors.emergencyContact ? 'is-invalid' : ''}`}
+                    className={`form-control ${
+                      errors.emergencyContact ? "is-invalid" : ""
+                    }`}
                     name="emergencyContact"
                     value={formData.emergencyContact}
                     onChange={handleChange}
                     required
                   />
-                  {errors.emergencyContact && <div className="invalid-feedback">{errors.emergencyContact}</div>}
+                  {errors.emergencyContact && (
+                    <div className="invalid-feedback">
+                      {errors.emergencyContact}
+                    </div>
+                  )}
                 </div>
                 <div className="col-md-6">
-                  <label className="form-label">Emergency Contact Phone *</label>
+                  <label className="form-label">
+                    Emergency Contact Phone *
+                  </label>
                   <input
                     type="tel"
-                    className={`form-control ${errors.emergencyPhone ? 'is-invalid' : ''}`}
+                    className={`form-control ${
+                      errors.emergencyPhone ? "is-invalid" : ""
+                    }`}
                     name="emergencyPhone"
                     value={formData.emergencyPhone}
                     onChange={handleChange}
                     required
                   />
-                  {errors.emergencyPhone && <div className="invalid-feedback">{errors.emergencyPhone}</div>}
+                  {errors.emergencyPhone && (
+                    <div className="invalid-feedback">
+                      {errors.emergencyPhone}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -288,7 +386,10 @@ const VolunteerApplication = ({ opportunity, onBack }) => {
                 >
                   {isSubmitting ? (
                     <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                      <span
+                        className="spinner-border spinner-border-sm me-2"
+                        role="status"
+                      ></span>
                       Submitting...
                     </>
                   ) : (
@@ -311,7 +412,7 @@ const VolunteerApplication = ({ opportunity, onBack }) => {
           <div className="card-body">
             <h6 className="card-title">{opportunity.title}</h6>
             <p className="text-muted small mb-3">{opportunity.description}</p>
-            
+
             <div className="mb-3">
               <h6>Organization</h6>
               <p className="text-muted">{opportunity.ngo}</p>
@@ -320,21 +421,24 @@ const VolunteerApplication = ({ opportunity, onBack }) => {
             <div className="mb-3">
               <h6>Location</h6>
               <p className="text-muted">
-                <i className="bi bi-geo-alt me-1"></i>{opportunity.location}
+                <i className="bi bi-geo-alt me-1"></i>
+                {opportunity.location}
               </p>
             </div>
 
             <div className="mb-3">
               <h6>Time Commitment</h6>
               <p className="text-muted">
-                <i className="bi bi-clock me-1"></i>{opportunity.timeCommitment}
+                <i className="bi bi-clock me-1"></i>
+                {opportunity.timeCommitment}
               </p>
             </div>
 
             <div className="mb-3">
               <h6>Work Type</h6>
               <p className="text-muted">
-                <i className="bi bi-briefcase me-1"></i>{opportunity.workType}
+                <i className="bi bi-briefcase me-1"></i>
+                {opportunity.workType}
               </p>
             </div>
 
@@ -342,7 +446,8 @@ const VolunteerApplication = ({ opportunity, onBack }) => {
               <h6>Duration</h6>
               <p className="text-muted">
                 <i className="bi bi-calendar me-1"></i>
-                {new Date(opportunity.startDate).toLocaleDateString()} - {new Date(opportunity.endDate).toLocaleDateString()}
+                {new Date(opportunity.startDate).toLocaleDateString()} -{" "}
+                {new Date(opportunity.endDate).toLocaleDateString()}
               </p>
             </div>
 
@@ -351,7 +456,8 @@ const VolunteerApplication = ({ opportunity, onBack }) => {
               <ul className="list-unstyled">
                 {opportunity.requirements.map((req, index) => (
                   <li key={index} className="small text-muted">
-                    <i className="bi bi-check-circle me-1"></i>{req}
+                    <i className="bi bi-check-circle me-1"></i>
+                    {req}
                   </li>
                 ))}
               </ul>
@@ -361,12 +467,20 @@ const VolunteerApplication = ({ opportunity, onBack }) => {
               <h6>Volunteers Needed</h6>
               <div className="d-flex justify-content-between align-items-center mb-1">
                 <small className="text-muted">Progress</small>
-                <small className="text-muted">{opportunity.volunteersApplied}/{opportunity.volunteersNeeded}</small>
+                <small className="text-muted">
+                  {opportunity.volunteersApplied}/{opportunity.volunteersNeeded}
+                </small>
               </div>
-              <div className="progress" style={{ height: '6px' }}>
-                <div 
-                  className="progress-bar bg-success" 
-                  style={{ width: `${Math.round((opportunity.volunteersApplied / opportunity.volunteersNeeded) * 100)}%` }}
+              <div className="progress" style={{ height: "6px" }}>
+                <div
+                  className="progress-bar bg-success"
+                  style={{
+                    width: `${Math.round(
+                      (opportunity.volunteersApplied /
+                        opportunity.volunteersNeeded) *
+                        100
+                    )}%`,
+                  }}
                 ></div>
               </div>
             </div>

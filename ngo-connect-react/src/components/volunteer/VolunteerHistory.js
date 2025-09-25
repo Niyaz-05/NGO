@@ -1,90 +1,61 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
+import { volunteerAPI } from "../../services/api";
+import { toast } from "react-toastify";
 
 const VolunteerHistory = () => {
   const [applications, setApplications] = useState([]);
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockApplications = [
-      {
-        id: 1,
-        opportunityTitle: "Environmental Cleanup Drive",
-        ngo: "Green Earth Foundation",
-        cause: "Environment",
-        appliedDate: "2024-01-15",
-        status: "approved",
-        startDate: "2024-02-15",
-        endDate: "2024-02-15",
-        hoursCompleted: 4,
-        totalHours: 4,
-        feedback: "Great experience! The team was very organized.",
-        rating: 5
-      },
-      {
-        id: 2,
-        opportunityTitle: "Teaching Assistant",
-        ngo: "Education for All",
-        cause: "Education",
-        appliedDate: "2024-01-10",
-        status: "pending",
-        startDate: "2024-02-01",
-        endDate: "2024-06-30",
-        hoursCompleted: 0,
-        totalHours: 40,
-        feedback: "",
-        rating: 0
-      },
-      {
-        id: 3,
-        opportunityTitle: "Medical Camp Support",
-        ngo: "Health First",
-        cause: "Healthcare",
-        appliedDate: "2024-01-05",
-        status: "completed",
-        startDate: "2024-01-20",
-        endDate: "2024-01-20",
-        hoursCompleted: 8,
-        totalHours: 8,
-        feedback: "Very rewarding experience helping the community.",
-        rating: 5
-      },
-      {
-        id: 4,
-        opportunityTitle: "Women's Workshop Facilitator",
-        ngo: "Women Empowerment Hub",
-        cause: "Women Empowerment",
-        appliedDate: "2024-01-01",
-        status: "rejected",
-        startDate: "2024-02-10",
-        endDate: "2024-05-10",
-        hoursCompleted: 0,
-        totalHours: 36,
-        feedback: "Unfortunately, we had many qualified applicants.",
-        rating: 0
-      }
-    ];
-    setApplications(mockApplications);
+    fetchApplicationHistory();
   }, []);
 
-  const filteredApplications = applications.filter(application => {
-    if (filter === 'all') return true;
+  const fetchApplicationHistory = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Get current user from localStorage
+      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+
+      if (!currentUser.id) {
+        setError("User not found. Please log in again.");
+        return;
+      }
+
+      const response = await volunteerAPI.getUserApplications(currentUser.id);
+      setApplications(response.data || []);
+    } catch (error) {
+      console.error("Error fetching application history:", error);
+      setError(
+        "Failed to load application history. Please check if the backend server is running."
+      );
+      setApplications([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredApplications = applications.filter((application) => {
+    if (filter === "all") return true;
     return application.status === filter;
   });
 
   const getStatusBadge = (status) => {
     const badges = {
-      'approved': 'success',
-      'pending': 'warning',
-      'completed': 'info',
-      'rejected': 'danger'
+      approved: "success",
+      pending: "warning",
+      completed: "info",
+      rejected: "danger",
     };
-    return `badge bg-${badges[status] || 'secondary'}`;
+    return `badge bg-${badges[status] || "secondary"}`;
   };
 
   const getTotalHours = () => {
     return applications
-      .filter(app => app.status === 'completed')
+      .filter((app) => app.status === "completed")
       .reduce((sum, app) => sum + app.hoursCompleted, 0);
   };
 
@@ -93,7 +64,9 @@ const VolunteerHistory = () => {
   };
 
   const getApprovedApplications = () => {
-    return applications.filter(app => app.status === 'approved' || app.status === 'completed').length;
+    return applications.filter(
+      (app) => app.status === "approved" || app.status === "completed"
+    ).length;
   };
 
   return (
@@ -101,7 +74,9 @@ const VolunteerHistory = () => {
       <div className="row mb-4">
         <div className="col-md-8">
           <h4>Your Volunteer History</h4>
-          <p className="text-muted">Track all your volunteer applications and activities</p>
+          <p className="text-muted">
+            Track all your volunteer applications and activities
+          </p>
         </div>
         <div className="col-md-4">
           <select
@@ -147,7 +122,25 @@ const VolunteerHistory = () => {
 
       <div className="card">
         <div className="card-body">
-          {filteredApplications.length > 0 ? (
+          {loading ? (
+            <div className="text-center py-4">
+              <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p className="mt-2">Loading your application history...</p>
+            </div>
+          ) : error ? (
+            <div className="alert alert-warning text-center">
+              <i className="bi bi-exclamation-triangle"></i>
+              <p className="mb-2">{error}</p>
+              <button
+                className="btn btn-outline-primary btn-sm"
+                onClick={fetchApplicationHistory}
+              >
+                Try Again
+              </button>
+            </div>
+          ) : filteredApplications.length > 0 ? (
             <div className="table-responsive">
               <table className="table table-hover">
                 <thead>
@@ -163,38 +156,56 @@ const VolunteerHistory = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredApplications.map(application => (
+                  {filteredApplications.map((application) => (
                     <tr key={application.id}>
                       <td>
                         <div>
-                          <h6 className="mb-0">{application.opportunityTitle}</h6>
-                          <small className="text-muted">{application.cause}</small>
+                          <h6 className="mb-0">
+                            {application.opportunityTitle}
+                          </h6>
+                          <small className="text-muted">
+                            {application.cause}
+                          </small>
                         </div>
                       </td>
                       <td>{application.ngo}</td>
-                      <td>{new Date(application.appliedDate).toLocaleDateString()}</td>
+                      <td>
+                        {new Date(application.appliedDate).toLocaleDateString()}
+                      </td>
                       <td>
                         <span className={getStatusBadge(application.status)}>
-                          {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                          {application.status
+                            ? application.status.charAt(0).toUpperCase() +
+                              application.status.slice(1)
+                            : "Unknown"}
                         </span>
                       </td>
                       <td>
                         <small>
-                          {new Date(application.startDate).toLocaleDateString()} - {new Date(application.endDate).toLocaleDateString()}
+                          {application.startDate
+                            ? new Date(
+                                application.startDate
+                              ).toLocaleDateString()
+                            : "-"}{" "}
+                          -{" "}
+                          {application.endDate
+                            ? new Date(application.endDate).toLocaleDateString()
+                            : "-"}
                         </small>
                       </td>
                       <td>
-                        {application.status === 'completed' ? (
+                        {application.status === "completed" ? (
                           <span className="text-success fw-bold">
-                            {application.hoursCompleted}/{application.totalHours}h
+                            {application.hoursCompleted || 0}/
+                            {application.totalHours || 0}h
                           </span>
-                        ) : application.status === 'approved' ? (
+                        ) : application.status === "approved" ? (
                           <span className="text-info">
-                            0/{application.totalHours}h
+                            0/{application.totalHours || 0}h
                           </span>
                         ) : (
                           <span className="text-muted">
-                            -/{application.totalHours}h
+                            -/{application.totalHours || 0}h
                           </span>
                         )}
                       </td>
@@ -205,12 +216,18 @@ const VolunteerHistory = () => {
                               {[...Array(5)].map((_, i) => (
                                 <i
                                   key={i}
-                                  className={`bi bi-star-fill ${i < application.rating ? 'text-warning' : 'text-muted'}`}
-                                  style={{ fontSize: '0.8rem' }}
+                                  className={`bi bi-star-fill ${
+                                    i < (application.rating || 0)
+                                      ? "text-warning"
+                                      : "text-muted"
+                                  }`}
+                                  style={{ fontSize: "0.8rem" }}
                                 ></i>
                               ))}
                             </div>
-                            <small className="text-muted">{application.feedback}</small>
+                            <small className="text-muted">
+                              {application.feedback}
+                            </small>
                           </div>
                         ) : (
                           <span className="text-muted">-</span>
@@ -218,21 +235,33 @@ const VolunteerHistory = () => {
                       </td>
                       <td>
                         <div className="btn-group btn-group-sm">
-                          <button className="btn btn-outline-primary" title="View Details">
+                          <button
+                            className="btn btn-outline-primary"
+                            title="View Details"
+                          >
                             <i className="bi bi-eye"></i>
                           </button>
-                          {application.status === 'completed' && (
-                            <button className="btn btn-outline-success" title="Download Certificate">
+                          {application.status === "completed" && (
+                            <button
+                              className="btn btn-outline-success"
+                              title="Download Certificate"
+                            >
                               <i className="bi bi-download"></i>
                             </button>
                           )}
-                          {application.status === 'pending' && (
-                            <button className="btn btn-outline-warning" title="Withdraw Application">
+                          {application.status === "pending" && (
+                            <button
+                              className="btn btn-outline-warning"
+                              title="Withdraw Application"
+                            >
                               <i className="bi bi-x-circle"></i>
                             </button>
                           )}
-                          {application.status === 'approved' && (
-                            <button className="btn btn-outline-info" title="Start Volunteering">
+                          {application.status === "approved" && (
+                            <button
+                              className="btn btn-outline-info"
+                              title="Start Volunteering"
+                            >
                               <i className="bi bi-play-circle"></i>
                             </button>
                           )}
@@ -248,14 +277,14 @@ const VolunteerHistory = () => {
               <i className="bi bi-person-check display-1 text-muted"></i>
               <h4 className="text-muted mt-3">No applications found</h4>
               <p className="text-muted">
-                {filter === 'all' 
+                {filter === "all"
                   ? "You haven't applied for any volunteer opportunities yet. Start making a difference today!"
-                  : `No ${filter} applications found.`
-                }
+                  : `No ${filter} applications found.`}
               </p>
-              {filter === 'all' && (
+              {filter === "all" && (
                 <button className="btn btn-success">
-                  <i className="bi bi-person-plus me-2"></i>Find Volunteer Opportunities
+                  <i className="bi bi-person-plus me-2"></i>Find Volunteer
+                  Opportunities
                 </button>
               )}
             </div>
