@@ -80,15 +80,16 @@ public class SecurityConfig {
                 .csrf().disable()
                 .exceptionHandling().authenticationEntryPoint(jwtAuthenticationEntryPoint).and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-                .authorizeRequests(auth -> auth
-                        .antMatchers(
-                                "/api/auth/**",
-                                "/api/public/**",
-                                "/api/ngos/**",
-                                "/api/opportunities/**",
-                                "/api/donations/ngo/**")
-                        .permitAll()
-                        .anyRequest().authenticated())
+                .authorizeRequests()
+                .antMatchers(
+                        "/api/auth/**",
+                        "/api/public/**",
+                        "/api/ngos/**",
+                        "/api/opportunities/**",
+                        "/api/donations/ngo/**")
+                .permitAll()
+                .anyRequest().authenticated()
+                .and()
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

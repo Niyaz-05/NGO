@@ -42,7 +42,7 @@ public class DonationService {
     public DonationDTO createDonation(DonationDTO donationDTO) {
         try {
             logger.info("Creating donation: {}", donationDTO);
-            
+
             // Validate required fields
             if (donationDTO.getUserId() == null) {
                 throw new IllegalArgumentException("User ID is required");
@@ -59,28 +59,30 @@ public class DonationService {
 
             // Fetch related entities
             User donor = userRepository.findById(donationDTO.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + donationDTO.getUserId()));
-            
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("User not found with id: " + donationDTO.getUserId()));
+
             NGO ngo = ngoRepository.findById(donationDTO.getNgoId())
-                    .orElseThrow(() -> new ResourceNotFoundException("NGO not found with id: " + donationDTO.getNgoId()));
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("NGO not found with id: " + donationDTO.getNgoId()));
 
             // Create and populate donation entity
             Donation donation = new Donation();
             donation.setDonor(donor);
             donation.setNgo(ngo);
             donation.setAmount(donationDTO.getAmount());
-            
+
             // Set payment method safely
             try {
                 donation.setPaymentMethod(donationDTO.getPaymentMethod());
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Invalid payment method: " + donationDTO.getPaymentMethod());
             }
-            
+
             // Set other fields
             donation.setDonorMessage(donationDTO.getDonorMessage());
             donation.setDonationDate(LocalDateTime.now());
-            
+
             // Set pledge type if available
             if (donationDTO.getPledgeType() != null) {
                 try {
@@ -89,34 +91,35 @@ public class DonationService {
                     donation.setPledgeType(Donation.PledgeType.ONE_TIME);
                 }
             }
-            
+
             // Set status
             try {
-                donation.setStatus(donationDTO.getStatus() != null ? 
-                        donationDTO.getStatus() : 
-                        (defaultDonationStatus != null ? DonationStatus.valueOf(defaultDonationStatus) : DonationStatus.PENDING));
+                DonationStatus statusToSet = donationDTO.getStatus() != null ? donationDTO.getStatus()
+                        : (defaultDonationStatus != null ? DonationStatus.valueOf(defaultDonationStatus)
+                                : DonationStatus.PENDING);
+                donation.setStatus(statusToSet);
             } catch (IllegalArgumentException e) {
                 logger.warn("Invalid donation status in configuration: {}", defaultDonationStatus);
                 donation.setStatus(DonationStatus.PENDING);
             }
-            
+
             // Save the donation
             Donation savedDonation = donationRepository.save(donation);
             logger.info("Donation created successfully with ID: {}", savedDonation.getId());
-            
+
             // Update user's total donations if the donation is completed
             if (savedDonation.getStatus() == DonationStatus.COMPLETED) {
                 updateUserDonationTotal(savedDonation);
             }
-            
+
             return convertToDTO(savedDonation);
-            
+
         } catch (Exception e) {
             logger.error("Error creating donation: {}", e.getMessage(), e);
             throw e;
         }
     }
-    
+
     private void updateUserDonationTotal(Donation donation) {
         if (donation.getDonor() != null) {
             User donor = donation.getDonor();
@@ -132,7 +135,7 @@ public class DonationService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
-    
+
     public List<NGODonationResponse> getDonationsByNgoId(Long ngoId) {
         System.out.println("Fetching donations for NGO ID: " + ngoId);
         try {
@@ -140,14 +143,14 @@ public class DonationService {
             if (!ngoRepository.existsById(ngoId)) {
                 throw new ResourceNotFoundException("NGO not found with id: " + ngoId);
             }
-            
+
             List<Donation> donations = donationRepository.findByNgoId(ngoId);
             System.out.println("Found " + donations.size() + " donations in database for NGO ID: " + ngoId);
-            
+
             List<NGODonationResponse> response = donations.stream()
                     .map(this::convertToNGODonationResponse)
                     .collect(Collectors.toList());
-            
+
             System.out.println("Successfully converted " + response.size() + " donations to response DTOs");
             return response;
         } catch (Exception e) {
@@ -167,12 +170,12 @@ public class DonationService {
         if (donation == null) {
             return null;
         }
-        
+
         try {
             NGODonationResponse response = new NGODonationResponse();
             response.setId(donation.getId());
             response.setAmount(donation.getAmount());
-            
+
             // Handle enums safely
             if (donation.getPaymentMethod() != null) {
                 response.setPaymentMethod(donation.getPaymentMethod().name());
@@ -180,20 +183,20 @@ public class DonationService {
             if (donation.getStatus() != null) {
                 response.setStatus(donation.getStatus().name());
             }
-            
+
             response.setTransactionId(donation.getTransactionId());
             response.setDonationDate(donation.getDonationDate());
             response.setCreatedAt(donation.getCreatedAt());
-            
+
             // Handle donor information
             if (donation.getDonor() != null) {
                 User donor = donation.getDonor();
                 // Initialize Hibernate proxy if needed
                 if (donor instanceof HibernateProxy) {
                     donor = userRepository.findById(donor.getId())
-                        .orElse(null);
+                            .orElse(null);
                 }
-                
+
                 if (donor != null) {
                     NGODonationResponse.DonorInfo donorInfo = new NGODonationResponse.DonorInfo();
                     donorInfo.setId(donor.getId());
@@ -202,9 +205,9 @@ public class DonationService {
                     response.setDonor(donorInfo);
                 }
             }
-            
+
             return response;
-            
+
         } catch (Exception e) {
             logger.error("Error converting Donation to NGODonationResponse: {}", e.getMessage(), e);
             throw new RuntimeException("Error converting donation to NGO donation response", e);
@@ -215,42 +218,42 @@ public class DonationService {
         if (donation == null) {
             return null;
         }
-        
+
         try {
             // Use ModelMapper for basic mapping
             DonationDTO dto = modelMapper.map(donation, DonationDTO.class);
-            
+
             // Manually set fields that need special handling
             if (donation.getDonor() != null) {
                 dto.setUserId(donation.getDonor().getId());
-                
+
                 // Set donor name - prefer organization name if available, otherwise full name
-                String donorName = (donation.getDonor().getOrganizationName() != null && 
-                                  !donation.getDonor().getOrganizationName().isEmpty()) ?
-                        donation.getDonor().getOrganizationName() :
-                        donation.getDonor().getFullName();
+                String donorName = (donation.getDonor().getOrganizationName() != null &&
+                        !donation.getDonor().getOrganizationName().isEmpty())
+                                ? donation.getDonor().getOrganizationName()
+                                : donation.getDonor().getFullName();
                 dto.setDonorName(donorName);
-                
+
                 dto.setDonorEmail(donation.getDonor().getEmail());
             }
-            
+
             if (donation.getNgo() != null) {
                 dto.setNgoId(donation.getNgo().getId());
-                
+
                 // Only include basic NGO info in the DTO
                 NGODTO ngoDTO = new NGODTO();
                 ngoDTO.setId(donation.getNgo().getId());
                 ngoDTO.setOrganizationName(donation.getNgo().getOrganizationName());
                 dto.setNgo(ngoDTO);
             }
-            
+
             // Ensure enum values are properly set
             if (donation.getPledgeType() != null) {
                 dto.setPledgeType(donation.getPledgeType().name());
             }
-            
+
             return dto;
-            
+
         } catch (Exception e) {
             logger.error("Error converting Donation to DTO: {}", e.getMessage(), e);
             throw new RuntimeException("Error converting donation to DTO", e);
