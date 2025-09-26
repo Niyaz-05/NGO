@@ -11,6 +11,7 @@ import SelectLogin from "./components/auth/SelectLogin";
 import NGOLogin from "./components/auth/NGOLogin";
 import DonorLogin from "./components/auth/DonorLogin";
 import VolunteerLogin from "./components/auth/VolunteerLogin";
+import AdminLogin from "./components/auth/AdminLogin";
 import NGORegister from "./components/auth/NGORegister";
 import DonorRegister from "./components/auth/DonorRegister";
 import VolunteerRegister from "./components/auth/VolunteerRegister";
@@ -57,6 +58,7 @@ function App() {
             <Route path="/auth/ngo-login" element={<NGOLogin />} />
             <Route path="/auth/donor-login" element={<DonorLogin />} />
             <Route path="/auth/volunteer-login" element={<VolunteerLogin />} />
+            <Route path="/auth/admin-login" element={<AdminLogin />} />
 
             {/* Registration Routes */}
             <Route path="/auth/ngo-register" element={<NGORegister />} />
@@ -100,6 +102,14 @@ function App() {
             {/* Dashboard Routes */}
             <Route
               path="/admin-dashboard"
+              element={
+                <RoleProtectedRoute roles={["ADMIN"]}>
+                  <AdminDashboard />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboards/admin-dashboard"
               element={
                 <RoleProtectedRoute roles={["ADMIN"]}>
                   <AdminDashboard />

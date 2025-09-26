@@ -167,3 +167,120 @@ INSERT INTO opportunity_requirements (opportunity_id, requirement) VALUES
 (3, 'Comfortable with patients'),
 (4, 'Leadership skills'),
 (4, 'Experience with women\'s issues');
+
+-- Admin tables for the Admin Module
+
+-- NGO verification requests table
+CREATE TABLE IF NOT EXISTS ngo_verification_requests (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ngo_id BIGINT NOT NULL,
+    status ENUM('PENDING', 'APPROVED', 'REJECTED', 'UNDER_REVIEW') DEFAULT 'PENDING',
+    submitted_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reviewed_date TIMESTAMP NULL,
+    reviewed_by BIGINT NULL, -- admin user id
+    reviewer_notes TEXT,
+    documents_provided TEXT, -- JSON or comma-separated list
+    verification_score INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (ngo_id) REFERENCES ngos(id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Admin activity logs table
+CREATE TABLE IF NOT EXISTS admin_activity_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    admin_id BIGINT NOT NULL,
+    activity_type ENUM('NGO_VERIFICATION', 'USER_MANAGEMENT', 'DONATION_REVIEW', 'REPORT_REVIEW', 'SYSTEM_CONFIG') NOT NULL,
+    target_id BIGINT, -- ID of the affected entity (NGO, user, donation, etc.)
+    action VARCHAR(100) NOT NULL, -- 'APPROVE', 'REJECT', 'SUSPEND', 'DELETE', etc.
+    description TEXT,
+    ip_address VARCHAR(45),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- System alerts table for admin notifications
+CREATE TABLE IF NOT EXISTS system_alerts (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    alert_type ENUM('NGO_PENDING_APPROVAL', 'MISSING_FUND_REPORT', 'SUSPICIOUS_ACTIVITY', 'HIGH_DONATION_VOLUME', 'SYSTEM_ERROR') NOT NULL,
+    priority ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL') DEFAULT 'MEDIUM',
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    related_entity_type ENUM('NGO', 'USER', 'DONATION', 'APPLICATION') NULL,
+    related_entity_id BIGINT NULL,
+    is_resolved BOOLEAN DEFAULT FALSE,
+    resolved_by BIGINT NULL, -- admin user id
+    resolved_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (resolved_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Fund utilization reports table
+CREATE TABLE IF NOT EXISTS fund_utilization_reports (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ngo_id BIGINT NOT NULL,
+    report_period_start DATE NOT NULL,
+    report_period_end DATE NOT NULL,
+    total_funds_received DECIMAL(15,2) NOT NULL,
+    total_funds_utilized DECIMAL(15,2) NOT NULL,
+    utilization_breakdown TEXT, -- JSON format
+    impact_description TEXT,
+    supporting_documents TEXT, -- file paths or URLs
+    submitted_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('PENDING', 'APPROVED', 'REJECTED', 'NEEDS_REVISION') DEFAULT 'PENDING',
+    reviewed_by BIGINT NULL, -- admin user id
+    reviewed_date TIMESTAMP NULL,
+    reviewer_comments TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (ngo_id) REFERENCES ngos(id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Platform statistics table for caching dashboard data
+CREATE TABLE IF NOT EXISTS platform_statistics (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    stat_date DATE NOT NULL,
+    total_ngos_registered INT DEFAULT 0,
+    total_ngos_verified INT DEFAULT 0,
+    total_ngos_pending INT DEFAULT 0,
+    total_users_registered INT DEFAULT 0,
+    total_donations_amount DECIMAL(15,2) DEFAULT 0.00,
+    total_donations_count INT DEFAULT 0,
+    active_volunteer_opportunities INT DEFAULT 0,
+    pending_verifications INT DEFAULT 0,
+    missing_fund_reports INT DEFAULT 0,
+    suspicious_activities INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_stat_date (stat_date)
+);
+
+-- Add indexes for admin tables
+CREATE INDEX idx_ngo_verification_status ON ngo_verification_requests(status);
+CREATE INDEX idx_ngo_verification_submitted ON ngo_verification_requests(submitted_date);
+CREATE INDEX idx_admin_activity_admin_id ON admin_activity_logs(admin_id);
+CREATE INDEX idx_admin_activity_type ON admin_activity_logs(activity_type);
+CREATE INDEX idx_system_alerts_type ON system_alerts(alert_type);
+CREATE INDEX idx_system_alerts_priority ON system_alerts(priority);
+CREATE INDEX idx_system_alerts_resolved ON system_alerts(is_resolved);
+CREATE INDEX idx_fund_reports_ngo_id ON fund_utilization_reports(ngo_id);
+CREATE INDEX idx_fund_reports_status ON fund_utilization_reports(status);
+CREATE INDEX idx_platform_stats_date ON platform_statistics(stat_date);
+
+-- Insert sample verification requests and alerts
+INSERT INTO ngo_verification_requests (ngo_id, status, submitted_date) VALUES
+(1, 'APPROVED', '2024-01-15 10:00:00'),
+(2, 'APPROVED', '2024-01-16 11:00:00'),
+(3, 'APPROVED', '2024-01-17 12:00:00'),
+(4, 'PENDING', '2024-02-01 14:00:00');
+
+INSERT INTO system_alerts (alert_type, priority, title, message, related_entity_type, related_entity_id) VALUES
+('NGO_PENDING_APPROVAL', 'MEDIUM', 'New NGO Awaiting Verification', 'Women Empowerment Hub has submitted documents for verification', 'NGO', 4),
+('MISSING_FUND_REPORT', 'HIGH', 'Fund Utilization Report Overdue', 'Green Earth Foundation has not submitted their quarterly fund report', 'NGO', 1),
+('SUSPICIOUS_ACTIVITY', 'HIGH', 'Unusual Donation Pattern Detected', 'Multiple large donations from the same source detected', 'DONATION', NULL);
+
+INSERT INTO platform_statistics (stat_date, total_ngos_registered, total_ngos_verified, total_ngos_pending, total_users_registered, total_donations_amount, total_donations_count, active_volunteer_opportunities) VALUES
+(CURDATE(), 4, 3, 1, 3, 489000.00, 15, 4);

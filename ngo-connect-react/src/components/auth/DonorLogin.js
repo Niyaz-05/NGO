@@ -1,5 +1,5 @@
-import React from 'react';
-import LoginForm from './LoginForm';
+import React from "react";
+import LoginForm from "./LoginForm";
 
 const DonorLogin = () => {
   return (
@@ -7,7 +7,7 @@ const DonorLogin = () => {
       userType="donor"
       title="Donor Login"
       registerLink="/auth/donor-register"
-      dashboardLink="/auth/user-choice"
+      dashboardLink="/donor-dashboard"
     />
   );
 };

@@ -28,26 +28,26 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
 public class AuthController {
-    
+
     @Autowired
     private AuthenticationManager authenticationManager;
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private JwtUtil jwtUtil;
-    
+
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
         try {
             User user = userService.registerUser(registerRequest);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "User registered successfully! Please check your email for verification.");
             response.put("userId", user.getId());
             response.put("email", user.getEmail());
-            
+
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             Map<String, String> error = new HashMap<>();
@@ -55,23 +55,22 @@ public class AuthController {
             return ResponseEntity.badRequest().body(error);
         }
     }
-    
+
     @Autowired
     private NGORepository ngoRepository;
-    
+
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         try {
             Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
-            );
-            
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
+
             SecurityContextHolder.getContext().setAuthentication(authentication);
             UserDetails principal = (UserDetails) authentication.getPrincipal();
             String jwt = jwtUtil.generateToken(principal);
-            
+
             User user = (User) principal;
-            
+
             // Create response with user data
             Map<String, Object> response = new HashMap<>();
             response.put("token", jwt);
@@ -79,18 +78,19 @@ public class AuthController {
             response.put("email", user.getEmail());
             response.put("fullName", user.getFullName());
             response.put("userType", user.getUserType().name());
-            
+            response.put("role", user.getUserType().name()); // Add explicit role field
+
             // Add organization name if available
             if (user.getOrganizationName() != null) {
                 response.put("organizationName", user.getOrganizationName());
             }
-            
+
             // If user is an NGO, include NGO profile data
             if (user.getUserType() == UserType.NGO) {
                 Optional<NGO> ngo = ngoRepository.findByEmail(user.getEmail());
                 ngo.ifPresent(ngoProfile -> response.put("ngoProfile", NGODTO.fromEntity(ngoProfile)));
             }
-            
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
@@ -98,14 +98,14 @@ public class AuthController {
             return ResponseEntity.badRequest().body(error);
         }
     }
-    
+
     // Email verification disabled
-    
+
     @GetMapping("/user-profile")
     public ResponseEntity<?> getUserProfile(Authentication authentication) {
         try {
             User user = (User) authentication.getPrincipal();
-            
+
             Map<String, Object> profile = new HashMap<>();
             profile.put("id", user.getId());
             profile.put("fullName", user.getFullName());
@@ -115,7 +115,7 @@ public class AuthController {
             profile.put("userType", user.getUserType());
             profile.put("emailVerified", user.getEmailVerified());
             profile.put("createdAt", user.getCreatedAt());
-            
+
             return ResponseEntity.ok(profile);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();

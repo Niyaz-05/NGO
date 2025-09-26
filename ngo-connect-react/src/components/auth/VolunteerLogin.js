@@ -1,5 +1,5 @@
-import React from 'react';
-import LoginForm from './LoginForm';
+import React from "react";
+import LoginForm from "./LoginForm";
 
 const VolunteerLogin = () => {
   return (
@@ -7,7 +7,7 @@ const VolunteerLogin = () => {
       userType="volunteer"
       title="Volunteer Login"
       registerLink="/auth/volunteer-register"
-      dashboardLink="/auth/user-choice"
+      dashboardLink="/volunteer-dashboard"
     />
   );
 };
