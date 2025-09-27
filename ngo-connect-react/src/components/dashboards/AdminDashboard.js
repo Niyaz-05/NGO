@@ -425,11 +425,20 @@ const AdminDashboard = () => {
               <div className="row">
                 <div className="col-md-3 mb-2">
                   <Link
-                    to="/directory/ngo-directory"
+                    to="/admin/ngo-management"
                     className="btn btn-primary w-100"
                   >
+                    <i className="bi bi-building-gear me-2"></i>
+                    NGO Management
+                  </Link>
+                </div>
+                <div className="col-md-3 mb-2">
+                  <Link
+                    to="/directory/ngo-directory"
+                    className="btn btn-secondary w-100"
+                  >
                     <i className="bi bi-building me-2"></i>
-                    Manage NGOs
+                    NGO Directory
                   </Link>
                 </div>
                 <div className="col-md-3 mb-2">
@@ -450,6 +459,8 @@ const AdminDashboard = () => {
                     Manage Events
                   </Link>
                 </div>
+              </div>
+              <div className="row mt-2">
                 <div className="col-md-3 mb-2">
                   <Link
                     to="/campaigns/campaign-detail"
@@ -457,6 +468,33 @@ const AdminDashboard = () => {
                   >
                     <i className="bi bi-megaphone me-2"></i>
                     Campaigns
+                  </Link>
+                </div>
+                <div className="col-md-3 mb-2">
+                  <Link
+                    to="/admin/user-management"
+                    className="btn btn-dark w-100"
+                  >
+                    <i className="bi bi-people me-2"></i>
+                    User Management
+                  </Link>
+                </div>
+                <div className="col-md-3 mb-2">
+                  <Link
+                    to="/admin/reports"
+                    className="btn btn-outline-primary w-100"
+                  >
+                    <i className="bi bi-graph-up me-2"></i>
+                    Reports
+                  </Link>
+                </div>
+                <div className="col-md-3 mb-2">
+                  <Link
+                    to="/admin/settings"
+                    className="btn btn-outline-secondary w-100"
+                  >
+                    <i className="bi bi-gear me-2"></i>
+                    Settings
                   </Link>
                 </div>
               </div>

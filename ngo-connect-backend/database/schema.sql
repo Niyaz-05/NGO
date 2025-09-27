@@ -36,8 +36,17 @@ CREATE TABLE IF NOT EXISTS ngos (
     image_url VARCHAR(500),
     urgency ENUM('LOW', 'MEDIUM', 'HIGH') DEFAULT 'MEDIUM',
     is_verified BOOLEAN DEFAULT FALSE,
+    status ENUM('PENDING', 'ACTIVE', 'SUSPENDED', 'DEACTIVATED', 'REJECTED') DEFAULT 'PENDING',
+    registration_documents TEXT, -- JSON array of document URLs
+    suspension_reason TEXT,
+    suspended_by BIGINT NULL,
+    suspended_at TIMESTAMP NULL,
+    verified_by BIGINT NULL,
+    verified_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (suspended_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- Donations table
@@ -146,11 +155,12 @@ INSERT INTO users (full_name, email, password, phone, address, user_type, email_
 ('Jane Smith', 'jane.smith@example.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '+1234567891', '456 Oak Ave, California, CA', 'VOLUNTEER', TRUE),
 ('Admin User', 'admin@ngoconnect.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '+1234567892', '789 Admin Blvd, Texas, TX', 'ADMIN', TRUE);
 
-INSERT INTO ngos (organization_name, description, cause, location, website, phone, email, total_donations, rating, urgency, is_verified) VALUES
-('Green Earth Foundation', 'Fighting climate change through reforestation projects and environmental education', 'Environment', 'New York', 'https://greenearth.org', '+1234567890', 'info@greenearth.org', 125000.00, 4.8, 'HIGH', TRUE),
-('Education for All', 'Providing quality education to underprivileged children in rural areas', 'Education', 'California', 'https://educationforall.org', '+1234567891', 'contact@educationforall.org', 89000.00, 4.6, 'MEDIUM', TRUE),
-('Health First', 'Medical assistance and healthcare services for rural communities', 'Healthcare', 'Texas', 'https://healthfirst.org', '+1234567892', 'info@healthfirst.org', 200000.00, 4.9, 'HIGH', TRUE),
-('Women Empowerment Hub', 'Supporting women entrepreneurs and leaders through training and mentorship', 'Women Empowerment', 'Florida', 'https://womenempowerment.org', '+1234567893', 'hello@womenempowerment.org', 75000.00, 4.7, 'MEDIUM', TRUE);
+INSERT INTO ngos (organization_name, description, cause, location, website, phone, email, total_donations, rating, urgency, is_verified, status, registration_documents) VALUES
+('Green Earth Foundation', 'Fighting climate change through reforestation projects and environmental education', 'Environment', 'New York', 'https://greenearth.org', '+1234567890', 'info@greenearth.org', 125000.00, 4.8, 'HIGH', TRUE, 'ACTIVE', '["registration_cert.pdf", "tax_exemption.pdf", "board_resolution.pdf"]'),
+('Education for All', 'Providing quality education to underprivileged children in rural areas', 'Education', 'California', 'https://educationforall.org', '+1234567891', 'contact@educationforall.org', 89000.00, 4.6, 'MEDIUM', TRUE, 'ACTIVE', '["registration_cert.pdf", "annual_report.pdf"]'),
+('Health First', 'Medical assistance and healthcare services for rural communities', 'Healthcare', 'Texas', 'https://healthfirst.org', '+1234567892', 'info@healthfirst.org', 200000.00, 4.9, 'HIGH', TRUE, 'ACTIVE', '["registration_cert.pdf", "medical_license.pdf", "audit_report.pdf"]'),
+('Women Empowerment Hub', 'Supporting women entrepreneurs and leaders through training and mentorship', 'Women Empowerment', 'Florida', 'https://womenempowerment.org', '+1234567893', 'hello@womenempowerment.org', 75000.00, 4.7, 'MEDIUM', TRUE, 'ACTIVE', '["registration_cert.pdf", "program_details.pdf"]'),
+('Pending NGO Application', 'New NGO application waiting for admin review', 'Healthcare', 'Arizona', 'https://newhealth.org', '+1234567894', 'info@newhealth.org', 0.00, 0.0, 'LOW', FALSE, 'PENDING', '["registration_cert.pdf", "founder_id.pdf"]');
 
 INSERT INTO volunteer_opportunities (title, description, ngo_id, cause, location, time_commitment, work_type, start_date, end_date, volunteers_needed, volunteers_applied, urgency) VALUES
 ('Environmental Cleanup Drive', 'Join us for a community cleanup drive to make our parks cleaner and greener', 1, 'Environment', 'Central Park, New York', '4 hours', 'Physical Work', '2024-02-15 09:00:00', '2024-02-15 13:00:00', 20, 15, 'MEDIUM'),
@@ -237,6 +247,22 @@ CREATE TABLE IF NOT EXISTS fund_utilization_reports (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (ngo_id) REFERENCES ngos(id) ON DELETE CASCADE,
     FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- NGO management actions table
+CREATE TABLE IF NOT EXISTS ngo_management_actions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    ngo_id BIGINT NOT NULL,
+    admin_id BIGINT NOT NULL,
+    action_type ENUM('APPROVE', 'REJECT', 'SUSPEND', 'DEACTIVATE', 'REACTIVATE', 'PROFILE_UPDATE', 'DOCUMENT_REVIEW') NOT NULL,
+    reason TEXT,
+    previous_status VARCHAR(50),
+    new_status VARCHAR(50),
+    additional_notes TEXT,
+    documents_reviewed TEXT, -- JSON array of document info
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ngo_id) REFERENCES ngos(id) ON DELETE CASCADE,
+    FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Platform statistics table for caching dashboard data

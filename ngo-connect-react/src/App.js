@@ -27,6 +27,7 @@ import Education from "./components/directory/Education";
 import Environment from "./components/directory/Environment";
 import DisasterRelief from "./components/directory/DisasterRelief";
 import AdminDashboard from "./components/dashboards/AdminDashboard";
+import NGOManagement from "./components/admin/NGOManagement";
 import DonorDashboard from "./components/dashboards/DonorDashboard";
 import VolunteerDashboard from "./components/dashboards/VolunteerDashboard";
 // Import the NGODashboard component
@@ -113,6 +114,14 @@ function App() {
               element={
                 <RoleProtectedRoute roles={["ADMIN"]}>
                   <AdminDashboard />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/ngo-management"
+              element={
+                <RoleProtectedRoute roles={["ADMIN"]}>
+                  <NGOManagement />
                 </RoleProtectedRoute>
               }
             />

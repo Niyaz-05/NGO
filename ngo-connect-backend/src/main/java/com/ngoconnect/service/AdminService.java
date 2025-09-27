@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import org.springframework.data.domain.Sort;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -289,4 +290,440 @@ public class AdminService {
 
         platformStatisticsRepository.save(stats);
     }
+
+    // NGO Management Methods
+
+    /**
+     * Get all NGOs for admin management with filtering
+     */
+    @Transactional(readOnly = true)
+    public List<java.util.Map<String, Object>> getAllNGOsForManagement(String status, int page, int size) {
+        System.out.println(
+                "getAllNGOsForManagement called with status: " + status + ", page: " + page + ", size: " + size);
+
+        List<NGO> ngos;
+
+        Sort sortByCreatedDesc = Sort.by(Sort.Direction.DESC, "createdAt");
+        if (status != null && !status.isEmpty()) {
+            // Filter by status if provided
+            ngos = ngoRepository.findAll(sortByCreatedDesc).stream()
+                    .filter(ngo -> {
+                        String ngoStatus = getNGOStatus(ngo);
+                        System.out.println("NGO " + ngo.getId() + " (" + ngo.getOrganizationName() + ") has status: "
+                                + ngoStatus + " (DB status: " + ngo.getStatus() + ", isVerified: " + ngo.getIsVerified()
+                                + ")");
+                        return status.equalsIgnoreCase(ngoStatus);
+                    })
+                    .skip(page * size)
+                    .limit(size)
+                    .collect(Collectors.toList());
+        } else {
+            ngos = ngoRepository.findAll(sortByCreatedDesc).stream()
+                    .peek(ngo -> {
+                        String ngoStatus = getNGOStatus(ngo);
+                        System.out.println("NGO " + ngo.getId() + " (" + ngo.getOrganizationName() + ") has status: "
+                                + ngoStatus + " (DB status: " + ngo.getStatus() + ", isVerified: " + ngo.getIsVerified()
+                                + ")");
+                    })
+                    .skip(page * size)
+                    .limit(size)
+                    .collect(Collectors.toList());
+        }
+
+        System.out.println("Returning " + ngos.size() + " NGOs for status filter: " + status);
+        return ngos.stream().map(this::mapNGOForManagement).collect(Collectors.toList());
+    }
+
+    /**
+     * Migrate existing NGOs to have proper status values
+     * This method should be called once to fix NGOs that were created before the
+     * status field was added
+     */
+    @Transactional
+    public void migrateNGOStatuses() {
+        List<NGO> allNgos = ngoRepository.findAll();
+
+        for (NGO ngo : allNgos) {
+            if (ngo.getStatus() == null) {
+                // Set status based on isVerified field
+                if (ngo.getIsVerified()) {
+                    ngo.setStatus(NGO.NGOStatus.ACTIVE);
+                } else {
+                    ngo.setStatus(NGO.NGOStatus.PENDING);
+                }
+                ngoRepository.save(ngo);
+                System.out.println("Migrated NGO " + ngo.getId() + " (" + ngo.getOrganizationName() + ") to status: "
+                        + ngo.getStatus());
+            }
+        }
+    }
+
+    /**
+     * Get detailed NGO information for admin review
+     */
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Object> getNGODetailsForReview(Long ngoId) {
+        Optional<NGO> ngoOpt = ngoRepository.findById(ngoId);
+        if (ngoOpt.isEmpty()) {
+            throw new RuntimeException("NGO not found with ID: " + ngoId);
+        }
+
+        NGO ngo = ngoOpt.get();
+        java.util.Map<String, Object> details = new java.util.HashMap<>();
+
+        // Basic NGO info
+        details.put("id", ngo.getId());
+        details.put("organizationName", ngo.getOrganizationName());
+        details.put("description", ngo.getDescription());
+        details.put("cause", ngo.getCause());
+        details.put("location", ngo.getLocation());
+        details.put("website", ngo.getWebsite());
+        details.put("phone", ngo.getPhone());
+        details.put("email", ngo.getEmail());
+        details.put("registrationNumber", ngo.getRegistrationNumber());
+        details.put("foundedYear", ngo.getFoundedYear());
+        details.put("totalDonations", ngo.getTotalDonations());
+        details.put("rating", ngo.getRating());
+        details.put("isVerified", ngo.getIsVerified());
+        details.put("status", getNGOStatus(ngo));
+        details.put("createdAt", ngo.getCreatedAt());
+        details.put("updatedAt", ngo.getUpdatedAt());
+
+        // Registration documents
+        details.put("registrationDocuments", parseDocuments(getRegistrationDocuments(ngo)));
+
+        // Suspension info if applicable
+        details.put("suspensionReason", getSuspensionReason(ngo));
+        details.put("suspendedBy", getSuspendedBy(ngo));
+        details.put("suspendedAt", getSuspendedAt(ngo));
+
+        // Verification info
+        details.put("verifiedBy", getVerifiedBy(ngo));
+        details.put("verifiedAt", getVerifiedAt(ngo));
+
+        return details;
+    }
+
+    /**
+     * Approve NGO application
+     */
+    @Transactional
+    public java.util.Map<String, Object> approveNGO(Long ngoId, Long adminId, String notes) {
+        Optional<NGO> ngoOpt = ngoRepository.findById(ngoId);
+        if (ngoOpt.isEmpty()) {
+            throw new RuntimeException("NGO not found with ID: " + ngoId);
+        }
+
+        NGO ngo = ngoOpt.get();
+        String previousStatus = getNGOStatus(ngo);
+
+        ngo.setIsVerified(true);
+        setNGOStatus(ngo, "ACTIVE");
+        setVerifiedBy(ngo, adminId);
+        setVerifiedAt(ngo, LocalDateTime.now());
+
+        ngoRepository.save(ngo);
+
+        // Log the action
+        logNGOManagementAction(ngoId, adminId, "APPROVE", notes, previousStatus, "ACTIVE");
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("success", true);
+        response.put("message", "NGO approved successfully");
+        response.put("ngoId", ngoId);
+        response.put("status", "ACTIVE");
+
+        return response;
+    }
+
+    /**
+     * Reject NGO application
+     */
+    @Transactional
+    public java.util.Map<String, Object> rejectNGO(Long ngoId, Long adminId, String reason) {
+        Optional<NGO> ngoOpt = ngoRepository.findById(ngoId);
+        if (ngoOpt.isEmpty()) {
+            throw new RuntimeException("NGO not found with ID: " + ngoId);
+        }
+
+        NGO ngo = ngoOpt.get();
+        String previousStatus = getNGOStatus(ngo);
+
+        ngo.setIsVerified(false);
+        setNGOStatus(ngo, "REJECTED");
+
+        ngoRepository.save(ngo);
+
+        // Log the action
+        logNGOManagementAction(ngoId, adminId, "REJECT", reason, previousStatus, "REJECTED");
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("success", true);
+        response.put("message", "NGO rejected");
+        response.put("ngoId", ngoId);
+        response.put("status", "REJECTED");
+
+        return response;
+    }
+
+    /**
+     * Suspend NGO
+     */
+    @Transactional
+    public java.util.Map<String, Object> suspendNGO(Long ngoId, Long adminId, String reason) {
+        Optional<NGO> ngoOpt = ngoRepository.findById(ngoId);
+        if (ngoOpt.isEmpty()) {
+            throw new RuntimeException("NGO not found with ID: " + ngoId);
+        }
+
+        NGO ngo = ngoOpt.get();
+        String previousStatus = getNGOStatus(ngo);
+
+        setNGOStatus(ngo, "SUSPENDED");
+        setSuspensionReason(ngo, reason);
+        setSuspendedBy(ngo, adminId);
+        setSuspendedAt(ngo, LocalDateTime.now());
+
+        ngoRepository.save(ngo);
+
+        // Log the action
+        logNGOManagementAction(ngoId, adminId, "SUSPEND", reason, previousStatus, "SUSPENDED");
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("success", true);
+        response.put("message", "NGO suspended successfully");
+        response.put("ngoId", ngoId);
+        response.put("status", "SUSPENDED");
+
+        return response;
+    }
+
+    /**
+     * Deactivate NGO
+     */
+    @Transactional
+    public java.util.Map<String, Object> deactivateNGO(Long ngoId, Long adminId, String reason) {
+        Optional<NGO> ngoOpt = ngoRepository.findById(ngoId);
+        if (ngoOpt.isEmpty()) {
+            throw new RuntimeException("NGO not found with ID: " + ngoId);
+        }
+
+        NGO ngo = ngoOpt.get();
+        String previousStatus = getNGOStatus(ngo);
+
+        setNGOStatus(ngo, "DEACTIVATED");
+
+        ngoRepository.save(ngo);
+
+        // Log the action
+        logNGOManagementAction(ngoId, adminId, "DEACTIVATE", reason, previousStatus, "DEACTIVATED");
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("success", true);
+        response.put("message", "NGO deactivated successfully");
+        response.put("ngoId", ngoId);
+        response.put("status", "DEACTIVATED");
+
+        return response;
+    }
+
+    /**
+     * Reactivate NGO
+     */
+    @Transactional
+    public java.util.Map<String, Object> reactivateNGO(Long ngoId, Long adminId, String notes) {
+        Optional<NGO> ngoOpt = ngoRepository.findById(ngoId);
+        if (ngoOpt.isEmpty()) {
+            throw new RuntimeException("NGO not found with ID: " + ngoId);
+        }
+
+        NGO ngo = ngoOpt.get();
+        String previousStatus = getNGOStatus(ngo);
+
+        setNGOStatus(ngo, "ACTIVE");
+        ngo.setIsVerified(true);
+
+        // Clear suspension info
+        setSuspensionReason(ngo, null);
+        setSuspendedBy(ngo, null);
+        setSuspendedAt(ngo, null);
+
+        ngoRepository.save(ngo);
+
+        // Log the action
+        logNGOManagementAction(ngoId, adminId, "REACTIVATE", notes, previousStatus, "ACTIVE");
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("success", true);
+        response.put("message", "NGO reactivated successfully");
+        response.put("ngoId", ngoId);
+        response.put("status", "ACTIVE");
+
+        return response;
+    }
+
+    /**
+     * Update NGO profile (admin managed)
+     */
+    @Transactional
+    public java.util.Map<String, Object> updateNGOProfile(Long ngoId, Long adminId,
+            java.util.Map<String, Object> profileData, String notes) {
+        Optional<NGO> ngoOpt = ngoRepository.findById(ngoId);
+        if (ngoOpt.isEmpty()) {
+            throw new RuntimeException("NGO not found with ID: " + ngoId);
+        }
+
+        NGO ngo = ngoOpt.get();
+        String previousStatus = getNGOStatus(ngo);
+
+        // Update allowed fields
+        if (profileData.containsKey("organizationName")) {
+            ngo.setOrganizationName((String) profileData.get("organizationName"));
+        }
+        if (profileData.containsKey("description")) {
+            ngo.setDescription((String) profileData.get("description"));
+        }
+        if (profileData.containsKey("website")) {
+            ngo.setWebsite((String) profileData.get("website"));
+        }
+        if (profileData.containsKey("phone")) {
+            ngo.setPhone((String) profileData.get("phone"));
+        }
+        if (profileData.containsKey("location")) {
+            ngo.setLocation((String) profileData.get("location"));
+        }
+
+        ngoRepository.save(ngo);
+
+        // Log the action
+        logNGOManagementAction(ngoId, adminId, "PROFILE_UPDATE", notes, previousStatus, getNGOStatus(ngo));
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("success", true);
+        response.put("message", "NGO profile updated successfully");
+        response.put("ngoId", ngoId);
+
+        return response;
+    }
+
+    /**
+     * Get NGO action history
+     */
+    @Transactional(readOnly = true)
+    public List<java.util.Map<String, Object>> getNGOActionHistory(Long ngoId) {
+        // This would require creating a repository method for NGOManagementActions
+        // For now, return empty list - implement when NGOManagementActionRepository is
+        // created
+        return new java.util.ArrayList<>();
+    }
+
+    // Helper methods for NGO management
+
+    private java.util.Map<String, Object> mapNGOForManagement(NGO ngo) {
+        java.util.Map<String, Object> map = new java.util.HashMap<>();
+        map.put("id", ngo.getId());
+        map.put("organizationName", ngo.getOrganizationName());
+        map.put("cause", ngo.getCause());
+        map.put("location", ngo.getLocation());
+        map.put("email", ngo.getEmail());
+        map.put("totalDonations", ngo.getTotalDonations());
+        map.put("rating", ngo.getRating());
+        map.put("isVerified", ngo.getIsVerified());
+        map.put("status", getNGOStatus(ngo));
+        map.put("createdAt", ngo.getCreatedAt());
+        map.put("registrationNumber", ngo.getRegistrationNumber());
+        return map;
+    }
+
+    private void logNGOManagementAction(Long ngoId, Long adminId, String actionType,
+            String notes, String previousStatus, String newStatus) {
+        // This would save to NGOManagementActions table
+        // Implementation depends on creating the entity and repository
+        System.out.println("NGO Management Action: " + actionType + " for NGO " + ngoId +
+                " by admin " + adminId + " - " + notes);
+    }
+
+    // Helper methods to handle NGO status and related fields
+    // These methods abstract away the database field access
+
+    private String getNGOStatus(NGO ngo) {
+        // Use the actual status field from database
+        if (ngo.getStatus() != null) {
+            return ngo.getStatus().name();
+        }
+        // Fallback to legacy logic for backward compatibility
+        if (ngo.getIsVerified()) {
+            return "ACTIVE";
+        } else {
+            return "PENDING";
+        }
+    }
+
+    private void setNGOStatus(NGO ngo, String status) {
+        // Set the new status field
+        try {
+            ngo.setStatus(NGO.NGOStatus.valueOf(status));
+        } catch (IllegalArgumentException e) {
+            // If status is not valid, default to PENDING
+            ngo.setStatus(NGO.NGOStatus.PENDING);
+        }
+
+        // Also set appropriate legacy fields for backward compatibility
+        switch (status) {
+            case "ACTIVE":
+                ngo.setIsVerified(true);
+                break;
+            case "PENDING":
+            case "REJECTED":
+            case "SUSPENDED":
+            case "DEACTIVATED":
+                ngo.setIsVerified(false);
+                break;
+        }
+    }
+
+    private String getRegistrationDocuments(NGO ngo) {
+        // Return registration documents JSON or empty array
+        return "[]"; // Placeholder
+    }
+
+    private List<String> parseDocuments(String documentsJson) {
+        // Parse JSON string to list of document names/URLs
+        return new java.util.ArrayList<>(); // Placeholder
+    }
+
+    private String getSuspensionReason(NGO ngo) {
+        return null;
+    } // Placeholder
+
+    private Long getSuspendedBy(NGO ngo) {
+        return null;
+    } // Placeholder
+
+    private LocalDateTime getSuspendedAt(NGO ngo) {
+        return null;
+    } // Placeholder
+
+    private Long getVerifiedBy(NGO ngo) {
+        return null;
+    } // Placeholder
+
+    private LocalDateTime getVerifiedAt(NGO ngo) {
+        return null;
+    } // Placeholder
+
+    private void setSuspensionReason(NGO ngo, String reason) {
+    } // Placeholder
+
+    private void setSuspendedBy(NGO ngo, Long adminId) {
+    } // Placeholder
+
+    private void setSuspendedAt(NGO ngo, LocalDateTime dateTime) {
+    } // Placeholder
+
+    private void setVerifiedBy(NGO ngo, Long adminId) {
+    } // Placeholder
+
+    private void setVerifiedAt(NGO ngo, LocalDateTime dateTime) {
+    } // Placeholder
 }

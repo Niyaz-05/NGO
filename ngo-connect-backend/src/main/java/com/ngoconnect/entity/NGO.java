@@ -93,6 +93,10 @@ public class NGO {
     @Column(name = "is_verified")
     private Boolean isVerified = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private NGOStatus status = NGOStatus.PENDING;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -110,6 +114,10 @@ public class NGO {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        // Ensure status has a default value
+        if (status == null) {
+            status = NGOStatus.PENDING;
+        }
     }
 
     @PreUpdate
@@ -336,4 +344,20 @@ public class NGO {
     public void setVolunteerOpportunities(List<VolunteerOpportunity> volunteerOpportunities) {
         this.volunteerOpportunities = volunteerOpportunities;
     }
+
+    public NGOStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(NGOStatus status) {
+        this.status = status;
+    }
+}
+
+enum NGOStatus {
+    PENDING,
+    ACTIVE,
+    SUSPENDED,
+    DEACTIVATED,
+    REJECTED
 }
