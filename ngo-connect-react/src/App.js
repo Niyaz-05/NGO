@@ -28,6 +28,8 @@ import Environment from "./components/directory/Environment";
 import DisasterRelief from "./components/directory/DisasterRelief";
 import AdminDashboard from "./components/dashboards/AdminDashboard";
 import NGOManagement from "./components/admin/NGOManagement";
+import UserManagement from "./components/admin/UserManagement";
+import DonationOversight from "./components/admin/DonationOversight";
 import DonorDashboard from "./components/dashboards/DonorDashboard";
 import VolunteerDashboard from "./components/dashboards/VolunteerDashboard";
 // Import the NGODashboard component
@@ -126,6 +128,22 @@ function App() {
               }
             />
             <Route
+              path="/admin/donations"
+              element={
+                <RoleProtectedRoute roles={["ADMIN"]}>
+                  <DonationOversight />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/user-management"
+              element={
+                <RoleProtectedRoute roles={["ADMIN"]}>
+                  <UserManagement />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
               path="/donor-dashboard"
               element={
                 <RoleProtectedRoute roles={["DONOR"]}>
@@ -136,7 +154,7 @@ function App() {
             <Route
               path="/ngo-dashboard"
               element={
-                <RoleProtectedRoute roles={["NGO"]}>
+                <RoleProtectedRoute roles={["NGO", "ADMIN"]}>
                   <NGODashboard />
                 </RoleProtectedRoute>
               }
@@ -189,7 +207,7 @@ function App() {
             <Route
               path="/user-dashboard"
               element={
-                <RoleProtectedRoute roles={["USER"]}>
+                <RoleProtectedRoute roles={["USER", "ADMIN"]}>
                   <UserDashboard />
                 </RoleProtectedRoute>
               }

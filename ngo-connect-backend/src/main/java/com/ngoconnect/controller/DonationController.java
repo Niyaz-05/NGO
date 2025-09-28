@@ -8,6 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import com.ngoconnect.entity.User;
 
 import java.util.List;
 
@@ -36,7 +39,7 @@ public class DonationController {
         DonationDTO donation = donationService.getDonationById(id);
         return ResponseEntity.ok(donation);
     }
-    
+
     @GetMapping("/ngo/{ngoId}")
     public ResponseEntity<List<NGODonationResponse>> getDonationsByNgoId(@PathVariable Long ngoId) {
         System.out.println("Received request for donations with NGO ID: " + ngoId);
@@ -49,5 +52,15 @@ public class DonationController {
             e.printStackTrace();
             throw e;
         }
+    }
+
+    @GetMapping("/my-history")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<List<DonationDTO>> getMyDonationHistory(Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        Long userId = user.getId();
+
+        List<DonationDTO> history = donationService.getDonationsByUserId(userId);
+        return ResponseEntity.ok(history);
     }
 }

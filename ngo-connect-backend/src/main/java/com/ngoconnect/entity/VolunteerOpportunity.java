@@ -78,6 +78,10 @@ public class VolunteerOpportunity {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OpportunityStatus status = OpportunityStatus.PENDING_APPROVAL; // Default to pending.
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -262,5 +266,13 @@ public class VolunteerOpportunity {
 
     public void setApplications(List<VolunteerApplication> applications) {
         this.applications = applications;
+    }
+
+    public OpportunityStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OpportunityStatus status) {
+        this.status = status;
     }
 }

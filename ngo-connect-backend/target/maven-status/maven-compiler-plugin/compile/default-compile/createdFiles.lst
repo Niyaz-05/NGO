@@ -15,6 +15,7 @@ com\ngoconnect\service\UserDetailsServiceImpl.class
 com\ngoconnect\config\EmailConfig.class
 com\ngoconnect\dto\RegisterRequest.class
 com\ngoconnect\entity\UserType.class
+com\ngoconnect\entity\NGOStatus.class
 com\ngoconnect\entity\User.class
 com\ngoconnect\repository\FundReportRepository.class
 com\ngoconnect\dto\VolunteerOpportunityDTO.class
@@ -29,6 +30,7 @@ com\ngoconnect\entity\PlatformStatistics.class
 com\ngoconnect\repository\VolunteerApplicationRepository.class
 com\ngoconnect\util\JwtUtil.class
 com\ngoconnect\controller\AdminController.class
+com\ngoconnect\repository\FundUtilizationReportRepository.class
 com\ngoconnect\entity\ApplicationStatus.class
 com\ngoconnect\NgoConnectBackendApplication.class
 com\ngoconnect\entity\NGO.class
@@ -44,10 +46,14 @@ com\ngoconnect\repository\DonationRepository.class
 com\ngoconnect\security\JwtAuthenticationEntryPoint.class
 com\ngoconnect\dto\AdminDashboardDTO.class
 com\ngoconnect\service\VolunteerService.class
+com\ngoconnect\controller\FundReportController.class
+com\ngoconnect\entity\OpportunityStatus.class
 com\ngoconnect\service\ApplicationService.class
 com\ngoconnect\entity\FundReport.class
 com\ngoconnect\service\UserService.class
 com\ngoconnect\entity\Donation.class
+com\ngoconnect\entity\FundUtilizationReport.class
+com\ngoconnect\filter\JwtRequestFilter.class
 com\ngoconnect\repository\UserRepository.class
 com\ngoconnect\repository\SystemAlertRepository.class
 com\ngoconnect\entity\VolunteerApplication.class
@@ -61,4 +67,5 @@ com\ngoconnect\service\EmailService.class
 com\ngoconnect\entity\DonationStatus.class
 com\ngoconnect\controller\VolunteerApplicationController.class
 com\ngoconnect\dto\ApplicationRequest.class
+com\ngoconnect\dto\FundReportDTO.class
 com\ngoconnect\entity\Donation$PledgeType.class

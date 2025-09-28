@@ -353,11 +353,3 @@ public class NGO {
         this.status = status;
     }
 }
-
-enum NGOStatus {
-    PENDING,
-    ACTIVE,
-    SUSPENDED,
-    DEACTIVATED,
-    REJECTED
-}

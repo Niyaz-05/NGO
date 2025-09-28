@@ -2,6 +2,7 @@ package com.ngoconnect.service;
 
 import com.ngoconnect.entity.VolunteerOpportunity;
 import com.ngoconnect.entity.UrgencyLevel;
+import com.ngoconnect.entity.OpportunityStatus;
 import com.ngoconnect.repository.VolunteerOpportunityRepository;
 import com.ngoconnect.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,19 +24,17 @@ public class VolunteerService {
     @Transactional(readOnly = true)
     public List<VolunteerOpportunity> getAllActiveOpportunities() {
         try {
-            List<VolunteerOpportunity> opportunities = volunteerOpportunityRepository.findAll();
-            System.out.println("Found " + opportunities.size() + " total opportunities");
+            List<VolunteerOpportunity> opportunities = volunteerOpportunityRepository
+                    .findByStatus(OpportunityStatus.ACTIVE);
+            System.out.println("Found " + opportunities.size() + " active opportunities");
 
-            // Filter active ones manually and force load requirements
-            return opportunities.stream()
-                    .filter(opp -> opp.getIsActive() != null && opp.getIsActive())
-                    .peek(opp -> {
-                        // Force load lazy requirements collection
-                        if (opp.getRequirements() != null) {
-                            opp.getRequirements().size(); // This triggers lazy loading
-                        }
-                    })
-                    .collect(java.util.stream.Collectors.toList());
+            // Force load requirements collection
+            opportunities.forEach(opp -> {
+                if (opp.getRequirements() != null)
+                    opp.getRequirements().size();
+            });
+
+            return opportunities;
         } catch (Exception e) {
             System.err.println("Error fetching opportunities: " + e.getMessage());
             e.printStackTrace();

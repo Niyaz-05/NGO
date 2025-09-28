@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import DonationOversight from "../admin/DonationOversight";
+import VolunteerOversight from "../admin/VolunteerOversight";
+import UserManagement from "../admin/UserManagement";
 
 const AdminDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -433,6 +436,21 @@ const AdminDashboard = () => {
                   </Link>
                 </div>
                 <div className="col-md-3 mb-2">
+                  <Link to="/admin/donations" className="btn btn-success w-100">
+                    <i className="bi bi-cash-stack me-2"></i>
+                    Donation Oversight
+                  </Link>
+                </div>
+                <div className="col-md-3 mb-2">
+                  <Link
+                    to="/admin/user-management"
+                    className="btn btn-info w-100"
+                  >
+                    <i className="bi bi-people-gear me-2"></i>
+                    User Management
+                  </Link>
+                </div>
+                <div className="col-md-3 mb-2">
                   <Link
                     to="/directory/ngo-directory"
                     className="btn btn-secondary w-100"
@@ -500,6 +518,27 @@ const AdminDashboard = () => {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* User Management Section */}
+      <div className="row mb-4">
+        <div className="col-12">
+          <UserManagement />
+        </div>
+      </div>
+
+      {/* ADD THE NEW DONATION OVERSIGHT SECTION HERE */}
+      <div className="row mb-4">
+        <div className="col-12">
+          <DonationOversight />
+        </div>
+      </div>
+
+      {/* ADD THE NEW VOLUNTEER OVERSIGHT SECTION HERE */}
+      <div className="row mb-4">
+        <div className="col-12">
+          <VolunteerOversight />
         </div>
       </div>
 

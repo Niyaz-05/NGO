@@ -1,6 +1,7 @@
 package com.ngoconnect.controller;
 
 import com.ngoconnect.dto.AdminDashboardDTO;
+import com.ngoconnect.dto.DonationDTO;
 import com.ngoconnect.entity.SystemAlert;
 import com.ngoconnect.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -155,6 +156,120 @@ public class AdminController {
             return ResponseEntity.ok(alerts);
         } catch (Exception e) {
             System.err.println("Error fetching alerts: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Get all donations (admin-only)
+     */
+    @GetMapping("/donations")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<DonationDTO>> getAllDonations() {
+        try {
+            List<DonationDTO> allDonations = adminService.getAllDonations();
+            return ResponseEntity.ok(allDonations);
+        } catch (Exception e) {
+            System.err.println("Error fetching donations: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Volunteer opportunity admin endpoints
+     */
+    @GetMapping("/volunteer-opportunities/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<com.ngoconnect.entity.VolunteerOpportunity>> getPendingOpportunities() {
+        return ResponseEntity.ok(adminService.getPendingOpportunities());
+    }
+
+    @PostMapping("/volunteer-opportunities/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> approveOpportunity(@PathVariable Long id) {
+        adminService.approveOpportunity(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/volunteer-opportunities/{id}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> rejectOpportunity(@PathVariable Long id) {
+        adminService.rejectOpportunity(id);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Donation reporting and monitoring endpoints
+     */
+    @GetMapping("/donations/report/ngo/{ngoId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> getDonationReportByNGO(
+            @PathVariable Long ngoId,
+            @RequestParam String startDate,
+            @RequestParam String endDate) {
+        try {
+            java.time.LocalDate start = java.time.LocalDate.parse(startDate);
+            java.time.LocalDate end = java.time.LocalDate.parse(endDate);
+            Map<String, Object> report = adminService.getDonationReportByNGO(ngoId, start, end);
+            return ResponseEntity.ok(report);
+        } catch (Exception e) {
+            System.err.println("Error generating NGO donation report: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/donations/report/cause/{cause}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> getDonationReportByCause(
+            @PathVariable String cause,
+            @RequestParam String startDate,
+            @RequestParam String endDate) {
+        try {
+            java.time.LocalDate start = java.time.LocalDate.parse(startDate);
+            java.time.LocalDate end = java.time.LocalDate.parse(endDate);
+            Map<String, Object> report = adminService.getDonationReportByCause(cause, start, end);
+            return ResponseEntity.ok(report);
+        } catch (Exception e) {
+            System.err.println("Error generating cause donation report: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/donations/suspicious-patterns")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Map<String, Object>>> flagUnusualDonationPatterns() {
+        try {
+            List<Map<String, Object>> patterns = adminService.flagUnusualDonationPatterns();
+            return ResponseEntity.ok(patterns);
+        } catch (Exception e) {
+            System.err.println("Error flagging suspicious donation patterns: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Volunteer monitoring endpoints
+     */
+    @GetMapping("/volunteer-opportunities/participation-report")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> getVolunteerParticipationReport() {
+        try {
+            Map<String, Object> report = adminService.getVolunteerParticipationReport();
+            return ResponseEntity.ok(report);
+        } catch (Exception e) {
+            System.err.println("Error generating volunteer participation report: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/volunteer-opportunities/suspicious")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<Map<String, Object>>> detectSuspiciousVolunteerOpportunities() {
+        try {
+            List<Map<String, Object>> suspicious = adminService.detectSuspiciousVolunteerOpportunities();
+            return ResponseEntity.ok(suspicious);
+        } catch (Exception e) {
+            System.err.println("Error detecting suspicious volunteer opportunities: " + e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -369,6 +484,123 @@ public class AdminController {
             return ResponseEntity.ok(actions);
         } catch (Exception e) {
             System.err.println("Error fetching NGO action history: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // User Management Endpoints
+
+    /**
+     * Get all users for management (with filtering)
+     */
+    @GetMapping("/users")
+    public ResponseEntity<List<Map<String, Object>>> getAllUsers(
+            @RequestParam(required = false) String userType,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        try {
+            List<Map<String, Object>> users = adminService.getAllUsersForManagement(userType, status, page, size);
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            System.err.println("Error fetching users: " + e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Get specific user details for review
+     */
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<Map<String, Object>> getUserDetails(@PathVariable Long userId) {
+        try {
+            Map<String, Object> details = adminService.getUserDetailsForReview(userId);
+            return ResponseEntity.ok(details);
+        } catch (Exception e) {
+            System.err.println("Error fetching user details: " + e.getMessage());
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Reset user password
+     */
+    @PostMapping("/users/{userId}/reset-password")
+    public ResponseEntity<Map<String, Object>> resetUserPassword(
+            @PathVariable Long userId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            Long adminId = ((Number) request.get("adminId")).longValue();
+            String newPassword = (String) request.get("newPassword");
+
+            Map<String, Object> result = adminService.resetUserPassword(userId, adminId, newPassword);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            System.err.println("Error resetting user password: " + e.getMessage());
+            Map<String, Object> errorResponse = Map.of(
+                    "success", false,
+                    "message", "Failed to reset password: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    /**
+     * Block user account
+     */
+    @PostMapping("/users/{userId}/block")
+    public ResponseEntity<Map<String, Object>> blockUser(
+            @PathVariable Long userId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            Long adminId = ((Number) request.get("adminId")).longValue();
+            String reason = (String) request.get("reason");
+
+            Map<String, Object> result = adminService.blockUser(userId, adminId, reason);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            System.err.println("Error blocking user: " + e.getMessage());
+            Map<String, Object> errorResponse = Map.of(
+                    "success", false,
+                    "message", "Failed to block user: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    /**
+     * Unblock user account
+     */
+    @PostMapping("/users/{userId}/unblock")
+    public ResponseEntity<Map<String, Object>> unblockUser(
+            @PathVariable Long userId,
+            @RequestBody Map<String, Object> request) {
+        try {
+            Long adminId = ((Number) request.get("adminId")).longValue();
+            String notes = (String) request.get("notes");
+
+            Map<String, Object> result = adminService.unblockUser(userId, adminId, notes);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            System.err.println("Error unblocking user: " + e.getMessage());
+            Map<String, Object> errorResponse = Map.of(
+                    "success", false,
+                    "message", "Failed to unblock user: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    /**
+     * Get user activity statistics
+     */
+    @GetMapping("/users/{userId}/activity")
+    public ResponseEntity<Map<String, Object>> getUserActivity(@PathVariable Long userId) {
+        try {
+            Map<String, Object> activity = adminService.getUserActivity(userId);
+            return ResponseEntity.ok(activity);
+        } catch (Exception e) {
+            System.err.println("Error fetching user activity: " + e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }

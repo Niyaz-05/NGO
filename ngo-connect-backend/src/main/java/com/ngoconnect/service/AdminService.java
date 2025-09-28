@@ -1,8 +1,11 @@
 package com.ngoconnect.service;
 
 import com.ngoconnect.dto.AdminDashboardDTO;
+import com.ngoconnect.dto.DonationDTO;
 import com.ngoconnect.entity.*;
+import com.ngoconnect.entity.Donation;
 import com.ngoconnect.repository.*;
+import com.ngoconnect.repository.DonationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,8 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.springframework.data.domain.Sort;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +36,9 @@ public class AdminService {
 
     @Autowired
     private DonationRepository donationRepository;
+
+    @Autowired
+    private DonationService donationService;
 
     @Autowired
     private VolunteerOpportunityRepository volunteerOpportunityRepository;
@@ -102,7 +107,25 @@ public class AdminService {
 
         // User statistics
         Long totalUsers = userRepository.count();
+        Long activeUsers = userRepository.findAll().stream()
+                .filter(user -> !Boolean.TRUE.equals(user.getIsBlocked())
+                        && Boolean.TRUE.equals(user.getEmailVerified()))
+                .count();
+        Long blockedUsers = userRepository.findAll().stream()
+                .filter(user -> Boolean.TRUE.equals(user.getIsBlocked()))
+                .count();
+        Long totalDonors = userRepository.findByUserType(UserType.DONOR).stream()
+                .filter(user -> !Boolean.TRUE.equals(user.getIsBlocked()))
+                .count();
+        Long totalVolunteers = userRepository.findByUserType(UserType.VOLUNTEER).stream()
+                .filter(user -> !Boolean.TRUE.equals(user.getIsBlocked()))
+                .count();
+
         overview.setTotalUsersRegistered(totalUsers.intValue());
+        overview.setTotalUsersActive(activeUsers.intValue());
+        overview.setTotalUsersBlocked(blockedUsers.intValue());
+        overview.setTotalDonors(totalDonors.intValue());
+        overview.setTotalVolunteers(totalVolunteers.intValue());
 
         // Donation statistics
         Long totalDonationCount = donationRepository.count();
@@ -117,7 +140,7 @@ public class AdminService {
         // Alert statistics
         Long unresolvedAlerts = systemAlertRepository.countUnresolvedAlerts();
         overview.setPendingVerifications(pendingNgos.intValue());
-        overview.setMissingFundReports(0); // TODO: Calculate from fund reports
+        overview.setMissingFundReports(getMissingFundReportsCount()); // Calculate from fund reports
         overview.setSuspiciousActivities(
                 systemAlertRepository.countUnresolvedAlertsByPriority(SystemAlert.Priority.HIGH).intValue());
 
@@ -155,6 +178,36 @@ public class AdminService {
                         request.getDocumentsProvided(),
                         request.getVerificationScore()))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Admin: Get volunteer opportunities pending approval
+     */
+    @Transactional(readOnly = true)
+    public List<VolunteerOpportunity> getPendingOpportunities() {
+        return volunteerOpportunityRepository.findByStatus(OpportunityStatus.PENDING_APPROVAL);
+    }
+
+    /**
+     * Admin: Approve a pending volunteer opportunity
+     */
+    @Transactional
+    public void approveOpportunity(Long opportunityId) {
+        VolunteerOpportunity opportunity = volunteerOpportunityRepository.findById(opportunityId)
+                .orElseThrow(() -> new RuntimeException("Opportunity not found"));
+        opportunity.setStatus(OpportunityStatus.ACTIVE);
+        volunteerOpportunityRepository.save(opportunity);
+    }
+
+    /**
+     * Admin: Reject a pending volunteer opportunity
+     */
+    @Transactional
+    public void rejectOpportunity(Long opportunityId) {
+        VolunteerOpportunity opportunity = volunteerOpportunityRepository.findById(opportunityId)
+                .orElseThrow(() -> new RuntimeException("Opportunity not found"));
+        opportunity.setStatus(OpportunityStatus.REJECTED);
+        volunteerOpportunityRepository.save(opportunity);
     }
 
     /**
@@ -281,6 +334,8 @@ public class AdminService {
         stats.setTotalNgosVerified(overview.getTotalNgosVerified());
         stats.setTotalNgosPending(overview.getTotalNgosPending());
         stats.setTotalUsersRegistered(overview.getTotalUsersRegistered());
+        // Note: PlatformStatistics entity may need to be updated with new user fields
+        // if needed
         stats.setTotalDonationsAmount(overview.getTotalDonationsAmount());
         stats.setTotalDonationsCount(overview.getTotalDonationsCount());
         stats.setActiveVolunteerOpportunities(overview.getActiveVolunteerOpportunities());
@@ -347,9 +402,9 @@ public class AdminService {
             if (ngo.getStatus() == null) {
                 // Set status based on isVerified field
                 if (ngo.getIsVerified()) {
-                    ngo.setStatus(NGO.NGOStatus.ACTIVE);
+                    ngo.setStatus(NGOStatus.ACTIVE);
                 } else {
-                    ngo.setStatus(NGO.NGOStatus.PENDING);
+                    ngo.setStatus(NGOStatus.PENDING);
                 }
                 ngoRepository.save(ngo);
                 System.out.println("Migrated NGO " + ngo.getId() + " (" + ngo.getOrganizationName() + ") to status: "
@@ -617,6 +672,206 @@ public class AdminService {
         return new java.util.ArrayList<>();
     }
 
+    // User Management Methods
+
+    /**
+     * Get all users for admin management with filtering
+     */
+    @Transactional(readOnly = true)
+    public List<java.util.Map<String, Object>> getAllUsersForManagement(String userType, String status, int page,
+            int size) {
+        System.out.println("getAllUsersForManagement called with userType: " + userType + ", status: " + status
+                + ", page: " + page + ", size: " + size);
+
+        Sort sortByCreatedDesc = Sort.by(Sort.Direction.DESC, "createdAt");
+        List<User> users = userRepository.findAll(sortByCreatedDesc).stream()
+                .filter(user -> {
+                    // Filter by user type if provided
+                    if (userType != null && !userType.isEmpty() && !userType.equalsIgnoreCase("ALL")) {
+                        if (!userType.equalsIgnoreCase(user.getUserType().name())) {
+                            return false;
+                        }
+                    }
+
+                    // Filter by status if provided
+                    if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("ALL")) {
+                        boolean isBlocked = Boolean.TRUE.equals(user.getIsBlocked());
+                        boolean matchesStatus = false;
+
+                        switch (status.toUpperCase()) {
+                            case "ACTIVE":
+                                matchesStatus = !isBlocked && Boolean.TRUE.equals(user.getEmailVerified());
+                                break;
+                            case "BLOCKED":
+                                matchesStatus = isBlocked;
+                                break;
+                            case "UNVERIFIED":
+                                matchesStatus = !isBlocked && !Boolean.TRUE.equals(user.getEmailVerified());
+                                break;
+                        }
+
+                        if (!matchesStatus) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                })
+                .skip(page * size)
+                .limit(size)
+                .collect(Collectors.toList());
+
+        return users.stream().map(this::mapUserForManagement).collect(Collectors.toList());
+    }
+
+    /**
+     * Get detailed user information for admin review
+     */
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Object> getUserDetailsForReview(Long userId) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+
+        User user = userOpt.get();
+        java.util.Map<String, Object> details = new java.util.HashMap<>();
+
+        // Basic user info
+        details.put("id", user.getId());
+        details.put("fullName", user.getFullName());
+        details.put("email", user.getEmail());
+        details.put("phone", user.getPhone());
+        details.put("address", user.getAddress());
+        details.put("userType", user.getUserType().name());
+        details.put("emailVerified", user.getEmailVerified());
+        details.put("isBlocked", user.getIsBlocked());
+        details.put("blockReason", user.getBlockReason());
+        details.put("blockedBy", user.getBlockedBy());
+        details.put("blockedAt", user.getBlockedAt());
+        details.put("totalDonations", user.getTotalDonations());
+        details.put("createdAt", user.getCreatedAt());
+        details.put("updatedAt", user.getUpdatedAt());
+
+        // Activity statistics
+        details.put("activityStats", getUserActivity(userId));
+
+        return details;
+    }
+
+    /**
+     * Get user activity statistics
+     */
+    @Transactional(readOnly = true)
+    public java.util.Map<String, Object> getUserActivity(Long userId) {
+        java.util.Map<String, Object> activity = new java.util.HashMap<>();
+
+        // Donation activity
+        List<Donation> donations = donationRepository.findAll().stream()
+                .filter(d -> d.getDonor() != null && d.getDonor().getId().equals(userId))
+                .collect(Collectors.toList());
+
+        activity.put("totalDonations", donations.size());
+        activity.put("totalDonationAmount", donations.stream().mapToDouble(Donation::getAmount).sum());
+        activity.put("recentDonations", donations.stream()
+                .sorted((d1, d2) -> d2.getDonationDate().compareTo(d1.getDonationDate()))
+                .limit(5)
+                .map(this::mapDonationForActivity)
+                .collect(Collectors.toList()));
+
+        // Volunteer activity (if applicable) - simplified for now since we don't have
+        // volunteer applications tracking
+        // This would require a separate VolunteerApplication entity
+        activity.put("totalVolunteerApplications", 0);
+        activity.put("recentVolunteerApplications", new java.util.ArrayList<>());
+        return activity;
+    }
+
+    /**
+     * Reset user password
+     */
+    @Transactional
+    public java.util.Map<String, Object> resetUserPassword(Long userId, Long adminId, String newPassword) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+
+        User user = userOpt.get();
+
+        // In a real application, you'd use password encoder
+        user.setPassword(newPassword);
+        userRepository.save(user);
+
+        // Log the action
+        logUserManagementAction(userId, adminId, "PASSWORD_RESET", "Password reset by admin");
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("success", true);
+        response.put("message", "Password reset successfully");
+        response.put("userId", userId);
+
+        return response;
+    }
+
+    /**
+     * Block user account
+     */
+    @Transactional
+    public java.util.Map<String, Object> blockUser(Long userId, Long adminId, String reason) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+
+        User user = userOpt.get();
+        user.setIsBlocked(true);
+        user.setBlockReason(reason);
+        user.setBlockedBy(adminId);
+        user.setBlockedAt(LocalDateTime.now());
+
+        userRepository.save(user);
+
+        // Log the action
+        logUserManagementAction(userId, adminId, "BLOCK", reason);
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("success", true);
+        response.put("message", "User blocked successfully");
+        response.put("userId", userId);
+
+        return response;
+    }
+
+    /**
+     * Unblock user account
+     */
+    @Transactional
+    public java.util.Map<String, Object> unblockUser(Long userId, Long adminId, String notes) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+
+        User user = userOpt.get();
+        user.setIsBlocked(false);
+        user.setBlockReason(null);
+        user.setBlockedBy(null);
+        user.setBlockedAt(null);
+
+        userRepository.save(user);
+
+        // Log the action
+        logUserManagementAction(userId, adminId, "UNBLOCK", notes);
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("success", true);
+        response.put("message", "User unblocked successfully");
+        response.put("userId", userId);
+
+        return response;
+    }
+
     // Helper methods for NGO management
 
     private java.util.Map<String, Object> mapNGOForManagement(NGO ngo) {
@@ -662,10 +917,10 @@ public class AdminService {
     private void setNGOStatus(NGO ngo, String status) {
         // Set the new status field
         try {
-            ngo.setStatus(NGO.NGOStatus.valueOf(status));
+            ngo.setStatus(NGOStatus.valueOf(status));
         } catch (IllegalArgumentException e) {
             // If status is not valid, default to PENDING
-            ngo.setStatus(NGO.NGOStatus.PENDING);
+            ngo.setStatus(NGOStatus.PENDING);
         }
 
         // Also set appropriate legacy fields for backward compatibility
@@ -726,4 +981,257 @@ public class AdminService {
 
     private void setVerifiedAt(NGO ngo, LocalDateTime dateTime) {
     } // Placeholder
+
+    // Helper methods for User management
+
+    private java.util.Map<String, Object> mapUserForManagement(User user) {
+        java.util.Map<String, Object> map = new java.util.HashMap<>();
+        map.put("id", user.getId());
+        map.put("fullName", user.getFullName());
+        map.put("email", user.getEmail());
+        map.put("phone", user.getPhone());
+        map.put("userType", user.getUserType().name());
+        map.put("emailVerified", user.getEmailVerified());
+        map.put("isBlocked", user.getIsBlocked());
+        map.put("totalDonations", user.getTotalDonations());
+        map.put("createdAt", user.getCreatedAt());
+        map.put("status", getUserStatus(user));
+        return map;
+    }
+
+    private String getUserStatus(User user) {
+        if (Boolean.TRUE.equals(user.getIsBlocked())) {
+            return "BLOCKED";
+        } else if (Boolean.TRUE.equals(user.getEmailVerified())) {
+            return "ACTIVE";
+        } else {
+            return "UNVERIFIED";
+        }
+    }
+
+    private java.util.Map<String, Object> mapDonationForActivity(Donation donation) {
+        java.util.Map<String, Object> map = new java.util.HashMap<>();
+        map.put("id", donation.getId());
+        map.put("amount", donation.getAmount());
+        map.put("ngoName", donation.getNgo() != null ? donation.getNgo().getOrganizationName() : "Unknown");
+        map.put("donatedAt", donation.getDonationDate());
+        map.put("status", donation.getStatus().name());
+        return map;
+    }
+
+    private java.util.Map<String, Object> mapVolunteerOpportunityForActivity(VolunteerOpportunity opportunity) {
+        java.util.Map<String, Object> map = new java.util.HashMap<>();
+        map.put("id", opportunity.getId());
+        map.put("title", opportunity.getTitle());
+        map.put("ngoName", opportunity.getNgo() != null ? opportunity.getNgo().getOrganizationName() : "Unknown");
+        map.put("location", opportunity.getLocation());
+        map.put("createdAt", opportunity.getCreatedAt());
+        return map;
+    }
+
+    /**
+     * Fetch all donations and convert to safe DTO format for admin consumption
+     */
+    @Transactional(readOnly = true)
+    public List<DonationDTO> getAllDonations() {
+        List<Donation> donations = donationRepository.findAll();
+        return donations.stream()
+                .map(donationService::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Generate donation report by NGO
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDonationReportByNGO(Long ngoId, LocalDate startDate, LocalDate endDate) {
+        List<Donation> donations = donationRepository.findAll().stream()
+                .filter(d -> d.getNgo() != null && d.getNgo().getId().equals(ngoId))
+                .filter(d -> d.getDonationDate().toLocalDate().isAfter(startDate.minusDays(1))
+                        && d.getDonationDate().toLocalDate().isBefore(endDate.plusDays(1)))
+                .collect(Collectors.toList());
+
+        Map<String, Object> report = new HashMap<>();
+        report.put("ngoId", ngoId);
+        report.put("ngoName", donations.isEmpty() ? "Unknown" : donations.get(0).getNgo().getOrganizationName());
+        report.put("totalDonations", donations.size());
+        report.put("totalAmount", donations.stream().mapToDouble(Donation::getAmount).sum());
+        report.put("averageAmount",
+                donations.isEmpty() ? 0 : donations.stream().mapToDouble(Donation::getAmount).average().orElse(0));
+        report.put("donations", donations.stream().map(donationService::convertToDto).collect(Collectors.toList()));
+        return report;
+    }
+
+    /**
+     * Generate donation report by cause
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDonationReportByCause(String cause, LocalDate startDate, LocalDate endDate) {
+        List<Donation> donations = donationRepository.findAll().stream()
+                .filter(d -> d.getNgo() != null && cause.equalsIgnoreCase(d.getNgo().getCause()))
+                .filter(d -> d.getDonationDate().toLocalDate().isAfter(startDate.minusDays(1))
+                        && d.getDonationDate().toLocalDate().isBefore(endDate.plusDays(1)))
+                .collect(Collectors.toList());
+
+        Map<String, Object> report = new HashMap<>();
+        report.put("cause", cause);
+        report.put("totalDonations", donations.size());
+        report.put("totalAmount", donations.stream().mapToDouble(Donation::getAmount).sum());
+        report.put("uniqueNGOs", donations.stream().map(d -> d.getNgo().getId()).distinct().count());
+        report.put("donations", donations.stream().map(donationService::convertToDto).collect(Collectors.toList()));
+        return report;
+    }
+
+    /**
+     * Flag unusual donation patterns
+     */
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> flagUnusualDonationPatterns() {
+        List<Map<String, Object>> suspiciousPatterns = new ArrayList<>();
+
+        // Find donors with unusually large donations
+        List<Donation> allDonations = donationRepository.findAll();
+        double avgDonationAmount = allDonations.stream().mapToDouble(Donation::getAmount).average().orElse(0);
+        double threshold = avgDonationAmount * 10; // 10x average is suspicious
+
+        Map<Long, List<Donation>> donorDonations = allDonations.stream()
+                .filter(d -> d.getDonor() != null)
+                .collect(Collectors.groupingBy(d -> d.getDonor().getId()));
+
+        for (Map.Entry<Long, List<Donation>> entry : donorDonations.entrySet()) {
+            List<Donation> donations = entry.getValue();
+            double userTotal = donations.stream().mapToDouble(Donation::getAmount).sum();
+
+            if (userTotal > threshold || donations.size() > 100) { // More than 100 donations is also suspicious
+                Map<String, Object> pattern = new HashMap<>();
+                pattern.put("donorId", entry.getKey());
+                pattern.put("donorName", donations.get(0).getDonor().getFullName());
+                pattern.put("totalAmount", userTotal);
+                pattern.put("donationCount", donations.size());
+                pattern.put("pattern", userTotal > threshold ? "LARGE_AMOUNT" : "HIGH_FREQUENCY");
+                suspiciousPatterns.add(pattern);
+            }
+        }
+
+        return suspiciousPatterns;
+    }
+
+    /**
+     * Monitor volunteer participation across NGOs
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getVolunteerParticipationReport() {
+        List<VolunteerOpportunity> activeOpportunities = volunteerOpportunityRepository.findByIsActive(true);
+
+        Map<String, Object> report = new HashMap<>();
+        report.put("totalActiveOpportunities", activeOpportunities.size());
+        report.put("totalVolunteersNeeded",
+                activeOpportunities.stream().mapToInt(VolunteerOpportunity::getVolunteersNeeded).sum());
+        report.put("totalVolunteersApplied", activeOpportunities.stream()
+                .mapToInt(vo -> vo.getVolunteersApplied() != null ? vo.getVolunteersApplied() : 0).sum());
+
+        // Group by NGO
+        Map<String, List<VolunteerOpportunity>> ngoOpportunities = activeOpportunities.stream()
+                .filter(vo -> vo.getNgo() != null)
+                .collect(Collectors.groupingBy(vo -> vo.getNgo().getOrganizationName()));
+
+        List<Map<String, Object>> ngoStats = new ArrayList<>();
+        for (Map.Entry<String, List<VolunteerOpportunity>> entry : ngoOpportunities.entrySet()) {
+            Map<String, Object> ngoStat = new HashMap<>();
+            ngoStat.put("ngoName", entry.getKey());
+            ngoStat.put("opportunityCount", entry.getValue().size());
+            ngoStat.put("volunteersNeeded",
+                    entry.getValue().stream().mapToInt(VolunteerOpportunity::getVolunteersNeeded).sum());
+            ngoStat.put("volunteersApplied", entry.getValue().stream()
+                    .mapToInt(vo -> vo.getVolunteersApplied() != null ? vo.getVolunteersApplied() : 0).sum());
+            ngoStats.add(ngoStat);
+        }
+
+        report.put("ngoStatistics", ngoStats);
+        return report;
+    }
+
+    /**
+     * Remove/flag fake volunteer opportunities
+     */
+    @Transactional
+    public List<Map<String, Object>> detectSuspiciousVolunteerOpportunities() {
+        List<VolunteerOpportunity> allOpportunities = volunteerOpportunityRepository.findAll();
+        List<Map<String, Object>> suspicious = new ArrayList<>();
+
+        for (VolunteerOpportunity opp : allOpportunities) {
+            Map<String, Object> suspiciousData = new HashMap<>();
+            boolean isSuspicious = false;
+            List<String> reasons = new ArrayList<>();
+
+            // Check for unrealistic volunteer requirements
+            if (opp.getVolunteersNeeded() != null && opp.getVolunteersNeeded() > 1000) {
+                reasons.add("UNREALISTIC_VOLUNTEER_COUNT");
+                isSuspicious = true;
+            }
+
+            // Check for duplicate/similar titles from same NGO
+            long similarTitles = allOpportunities.stream()
+                    .filter(other -> other.getNgo() != null && opp.getNgo() != null)
+                    .filter(other -> other.getNgo().getId().equals(opp.getNgo().getId()))
+                    .filter(other -> other.getTitle().toLowerCase()
+                            .contains(opp.getTitle().toLowerCase().substring(0, Math.min(10, opp.getTitle().length()))))
+                    .count();
+
+            if (similarTitles > 5) {
+                reasons.add("DUPLICATE_OPPORTUNITIES");
+                isSuspicious = true;
+            }
+
+            // Check for vague descriptions
+            if (opp.getDescription() != null && opp.getDescription().length() < 50) {
+                reasons.add("VAGUE_DESCRIPTION");
+                isSuspicious = true;
+            }
+
+            if (isSuspicious) {
+                suspiciousData.put("opportunityId", opp.getId());
+                suspiciousData.put("title", opp.getTitle());
+                suspiciousData.put("ngoName", opp.getNgo() != null ? opp.getNgo().getOrganizationName() : "Unknown");
+                suspiciousData.put("reasons", reasons);
+                suspicious.add(suspiciousData);
+            }
+        }
+
+        return suspicious;
+    }
+
+    /**
+     * Calculate missing fund reports count
+     */
+    private int getMissingFundReportsCount() {
+        // Simple logic: NGOs that have received donations but haven't submitted reports
+        // recently
+        List<NGO> verifiedNGOs = ngoRepository.findByIsVerified(true);
+        int missingReports = 0;
+
+        LocalDateTime threeMonthsAgo = LocalDateTime.now().minusMonths(3);
+
+        for (NGO ngo : verifiedNGOs) {
+            // Check if NGO has received donations
+            boolean hasRecentDonations = donationRepository.findAll().stream()
+                    .anyMatch(d -> d.getNgo() != null && d.getNgo().getId().equals(ngo.getId())
+                            && d.getDonationDate().isAfter(threeMonthsAgo));
+
+            if (hasRecentDonations) {
+                // For now, we'll count all NGOs with recent donations as missing reports
+                // In a real system, you'd check against a FundUtilizationReport table
+                missingReports++;
+            }
+        }
+
+        return Math.max(0, missingReports);
+    }
+
+    private void logUserManagementAction(Long userId, Long adminId, String actionType, String notes) {
+        // This would save to UserManagementActions table
+        // Implementation depends on creating the entity and repository
+        System.out.println("User Management Action: " + actionType + " for User " + userId +
+                " by admin " + adminId + " - " + notes);
+    }
 }

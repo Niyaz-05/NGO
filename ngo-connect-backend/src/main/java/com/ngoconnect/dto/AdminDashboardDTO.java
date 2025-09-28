@@ -48,6 +48,10 @@ public class AdminDashboardDTO {
         private Integer totalNgosVerified;
         private Integer totalNgosPending;
         private Integer totalUsersRegistered;
+        private Integer totalUsersActive;
+        private Integer totalUsersBlocked;
+        private Integer totalDonors;
+        private Integer totalVolunteers;
         private Double totalDonationsAmount;
         private Integer totalDonationsCount;
         private Integer activeVolunteerOpportunities;
@@ -89,6 +93,38 @@ public class AdminDashboardDTO {
 
         public void setTotalUsersRegistered(Integer totalUsersRegistered) {
             this.totalUsersRegistered = totalUsersRegistered;
+        }
+
+        public Integer getTotalUsersActive() {
+            return totalUsersActive;
+        }
+
+        public void setTotalUsersActive(Integer totalUsersActive) {
+            this.totalUsersActive = totalUsersActive;
+        }
+
+        public Integer getTotalUsersBlocked() {
+            return totalUsersBlocked;
+        }
+
+        public void setTotalUsersBlocked(Integer totalUsersBlocked) {
+            this.totalUsersBlocked = totalUsersBlocked;
+        }
+
+        public Integer getTotalDonors() {
+            return totalDonors;
+        }
+
+        public void setTotalDonors(Integer totalDonors) {
+            this.totalDonors = totalDonors;
+        }
+
+        public Integer getTotalVolunteers() {
+            return totalVolunteers;
+        }
+
+        public void setTotalVolunteers(Integer totalVolunteers) {
+            this.totalVolunteers = totalVolunteers;
         }
 
         public Double getTotalDonationsAmount() {

@@ -259,4 +259,11 @@ public class DonationService {
             throw new RuntimeException("Error converting donation to DTO", e);
         }
     }
+
+    /**
+     * Public wrapper to expose conversion for other services (e.g., AdminService)
+     */
+    public DonationDTO convertToDto(Donation donation) {
+        return convertToDTO(donation);
+    }
 }
