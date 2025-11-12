@@ -40,15 +40,15 @@ const FundReportsList = ({ ngoId }) => {
           </div>
           <div className="card-body">
             <p>
-              <strong>Total Funds Received:</strong> $
+              <strong>Total Funds Received:</strong> ₹
               {Number(report.totalFundsReceived).toLocaleString()}
             </p>
             <p>
-              <strong>Total Funds Spent:</strong> $
+              <strong>Total Funds Spent:</strong> ₹
               {Number(report.totalFundsSpent).toLocaleString()}
             </p>
             <p>
-              <strong>Remaining Balance:</strong> $
+              <strong>Remaining Balance:</strong> ₹
               {Number(
                 report.totalFundsReceived - report.totalFundsSpent
               ).toLocaleString()}

@@ -55,12 +55,34 @@ public class DonationController {
     }
 
     @GetMapping("/my-history")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    @PreAuthorize("hasRole('DONOR') or hasRole('VOLUNTEER') or hasRole('NGO') or hasRole('ADMIN')")
     public ResponseEntity<List<DonationDTO>> getMyDonationHistory(Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         Long userId = user.getId();
 
         List<DonationDTO> history = donationService.getDonationsByUserId(userId);
         return ResponseEntity.ok(history);
+    }
+
+    @PostMapping("/process-dummy")
+    @PreAuthorize("hasRole('DONOR') or hasRole('VOLUNTEER') or hasRole('NGO') or hasRole('ADMIN')")
+    public ResponseEntity<DonationDTO> processDummyDonation(@RequestBody DonationDTO donationDTO,
+            Authentication authentication) {
+        try {
+            User user = (User) authentication.getPrincipal();
+            Long userId = user.getId();
+
+            // Debug logging
+            logger.info("Processing dummy donation for user ID: {} with type: {}", userId, user.getUserType());
+            logger.info("User authorities: {}", user.getAuthorities());
+            logger.info("Donation request: NGO ID: {}, Amount: {}", donationDTO.getNgoId(), donationDTO.getAmount());
+
+            DonationDTO receipt = donationService.processDummyDonation(donationDTO, userId);
+            logger.info("Donation processed successfully");
+            return ResponseEntity.ok(receipt);
+        } catch (Exception e) {
+            logger.error("Error processing dummy donation: ", e);
+            throw e;
+        }
     }
 }

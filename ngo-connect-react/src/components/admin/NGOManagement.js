@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import AdminNavigation from "./AdminNavigation";
 
 const NGOManagement = () => {
   const [ngos, setNgos] = useState([]);
@@ -208,6 +209,9 @@ const NGOManagement = () => {
           </button>
         </div>
       </div>
+
+      {/* Navigation */}
+      <AdminNavigation />
 
       {/* Status Filter */}
       <div className="row mb-4">

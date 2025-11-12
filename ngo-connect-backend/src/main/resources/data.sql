@@ -8,7 +8,9 @@ INSERT IGNORE INTO users (full_name, email, password, phone, address, user_type,
 ('Admin User', 'admin@ngoconnect.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '+1234567892', '789 Admin Blvd, Texas, TX', 'ADMIN', TRUE),
 ('Deepak Soni', 'deepaksoni23022004@gmail.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '+1234567893', '123 Test Address', 'VOLUNTEER', TRUE),
 ('Test Admin', 'testadmin@gmail.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '+1234567894', '456 Test Address', 'ADMIN', TRUE),
-('Test User', 'test@gmail.com', '$2a$12$LQqUy8qZmE0J0Y2PJkFgweS9s1HI8SjKo5ZE8o6MjNcYWJKPCZxKy', '+1234567895', '789 Test Street', 'ADMIN', TRUE);
+('Test User', 'test@gmail.com', '$2a$12$LQqUy8qZmE0J0Y2PJkFgweS9s1HI8SjKo5ZE8o6MjNcYWJKPCZxKy', '+1234567895', '789 Test Street', 'ADMIN', TRUE),
+('Donor User', 'donor@gmail.com', '$2a$10$ggietOO5YrW1l8fVOVOP0.C7GFHndgw9cjTPANJCT8jePmY5W4.OC', '6266537867', 'Test Donor Address', 'DONOR', TRUE),
+('Volunteer User', 'volunteer@gmail.com', '$2a$10$ggietOO5YrW1l8fVOVOP0.C7GFHndgw9cjTPANJCT8jePmY5W4.OC', '6266537868', 'Test Volunteer Address', 'VOLUNTEER', TRUE);
 
 -- Insert sample NGOs
 INSERT IGNORE INTO ngos (organization_name, description, cause, location, website, phone, email, total_donations, rating, urgency, is_verified, status) VALUES

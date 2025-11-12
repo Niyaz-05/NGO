@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import axios from "axios";
+import AdminNavigation from "./AdminNavigation";
 
 const DonationOversight = () => {
   const [donations, setDonations] = useState([]);
@@ -33,44 +34,60 @@ const DonationOversight = () => {
   }
 
   return (
-    <div className="card shadow-sm mt-4">
-      <div className="card-header py-3">
-        <h6 className="m-0 font-weight-bold text-primary">
-          <i className="bi bi-cash-stack me-2"></i>Donation Oversight
-        </h6>
+    <div className="container-fluid py-4">
+      {/* Header */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 className="h3 mb-0 text-gray-800">Donation Oversight</h1>
+          <p className="text-muted">Monitor and manage all donations</p>
+        </div>
       </div>
-      <div className="card-body">
-        <div className="table-responsive">
-          <table className="table table-striped table-hover">
-            <thead className="table-light">
-              <tr>
-                <th>ID</th>
-                <th>Donor Name</th>
-                <th>NGO Name</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {donations.map((donation) => (
-                <tr key={donation.id}>
-                  <td>{donation.id}</td>
-                  <td>{donation.donorName || "N/A"}</td>
-                  <td>
-                    {donation.ngo ? donation.ngo.organizationName : "N/A"}
-                  </td>
-                  <td>${donation.amount.toFixed(2)}</td>
-                  <td>
-                    <span className="badge bg-success">{donation.status}</span>
-                  </td>
-                  <td>
-                    {new Date(donation.donationDate).toLocaleDateString()}
-                  </td>
+
+      {/* Navigation */}
+      <AdminNavigation />
+
+      {/* Donations Table */}
+      <div className="card shadow-sm">
+        <div className="card-header py-3">
+          <h6 className="m-0 font-weight-bold text-primary">
+            <i className="bi bi-cash-stack me-2"></i>All Donations
+          </h6>
+        </div>
+        <div className="card-body">
+          <div className="table-responsive">
+            <table className="table table-striped table-hover">
+              <thead className="table-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Donor Name</th>
+                  <th>NGO Name</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {donations.map((donation) => (
+                  <tr key={donation.id}>
+                    <td>{donation.id}</td>
+                    <td>{donation.donorName || "N/A"}</td>
+                    <td>
+                      {donation.ngo ? donation.ngo.organizationName : "N/A"}
+                    </td>
+                    <td>₹{donation.amount.toFixed(2)}</td>
+                    <td>
+                      <span className="badge bg-success">
+                        {donation.status}
+                      </span>
+                    </td>
+                    <td>
+                      {new Date(donation.donationDate).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

@@ -22,6 +22,10 @@ const ProfileTab = ({ profile, user, onUpdate, setProfile }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!profile.id) {
+      alert('Cannot update NGO: Missing NGO ID. Please refresh the page or contact support.');
+      return;
+    }
     setSaving(true);
     try {
       // Prepare the update data with all required fields

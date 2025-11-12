@@ -167,10 +167,13 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<DonationDTO>> getAllDonations() {
         try {
+            System.out.println("Admin donations endpoint called");
             List<DonationDTO> allDonations = adminService.getAllDonations();
+            System.out.println("Returning " + allDonations.size() + " donations to frontend");
             return ResponseEntity.ok(allDonations);
         } catch (Exception e) {
             System.err.println("Error fetching donations: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -182,6 +185,76 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<com.ngoconnect.entity.VolunteerOpportunity>> getPendingOpportunities() {
         return ResponseEntity.ok(adminService.getPendingOpportunities());
+    }
+
+    /**
+     * Test endpoint to verify controller is working
+     */
+    @GetMapping("/test")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> testEndpoint() {
+        System.out.println("=== ADMIN TEST ENDPOINT CALLED ===");
+        return ResponseEntity.ok("Admin controller is working");
+    }
+
+    /**
+     * Simple volunteer opportunities test endpoint
+     */
+    @GetMapping("/volunteer-opportunities-simple")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> getVolunteerOpportunitiesSimple() {
+        System.out.println("=== SIMPLE VOLUNTEER OPPORTUNITIES ENDPOINT REACHED ===");
+        try {
+            String result = adminService.testVolunteerOpportunityAccess();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            System.err.println("Simple endpoint error: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.ok("Error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Minimal test endpoint to check if admin routes work
+     */
+    @GetMapping("/volunteer-test")
+    public ResponseEntity<String> volunteerTest() {
+        System.out.println("=== VOLUNTEER TEST ENDPOINT HIT ===");
+        return ResponseEntity.ok("Volunteer test endpoint working");
+    }
+
+    /**
+     * Get all volunteer opportunities (admin-only)
+     */
+    /**
+     * Debug endpoint to check all mappings
+     */
+    @GetMapping("/debug-mappings")
+    public ResponseEntity<String> debugMappings() {
+        System.out.println("=== DEBUG MAPPINGS ENDPOINT REACHED ===");
+        return ResponseEntity.ok("Debug endpoint working at " + java.time.LocalDateTime.now());
+    }
+
+    /**
+     * Get all volunteer opportunities (admin-only) - NO SECURITY TEST
+     */
+    @GetMapping("/volunteer-opportunities")
+    public ResponseEntity<String> getAllVolunteerOpportunities() {
+        System.out.println("=== VOLUNTEER OPPORTUNITIES ENDPOINT REACHED (NO SECURITY) ===");
+        System.out.println("Method called at: " + java.time.LocalDateTime.now());
+
+        try {
+            System.out.println("=== Starting simplified try block ===");
+            String result = adminService.testVolunteerOpportunityAccess();
+            System.out.println("Service call completed: " + result);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            System.err.println("=== ERROR in volunteer opportunities endpoint ===");
+            System.err.println("Error type: " + e.getClass().getSimpleName());
+            System.err.println("Error message: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.ok("Error: " + e.getMessage());
+        }
     }
 
     @PostMapping("/volunteer-opportunities/{id}/approve")

@@ -125,6 +125,14 @@ public class NGO {
         updatedAt = LocalDateTime.now();
     }
 
+    @PostLoad
+    protected void onLoad() {
+        // Fix any null status values that might exist in the database
+        if (status == null) {
+            status = NGOStatus.APPROVED;
+        }
+    }
+
     // Constructors
     public NGO() {
     }
@@ -346,7 +354,8 @@ public class NGO {
     }
 
     public NGOStatus getStatus() {
-        return status;
+        // Handle null values in database gracefully
+        return status != null ? status : NGOStatus.APPROVED;
     }
 
     public void setStatus(NGOStatus status) {

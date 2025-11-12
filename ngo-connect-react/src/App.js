@@ -9,8 +9,6 @@ import "./App.css";
 import Home from "./components/Home";
 import SelectLogin from "./components/auth/SelectLogin";
 import NGOLogin from "./components/auth/NGOLogin";
-import DonorLogin from "./components/auth/DonorLogin";
-import VolunteerLogin from "./components/auth/VolunteerLogin";
 import AdminLogin from "./components/auth/AdminLogin";
 import NGORegister from "./components/auth/NGORegister";
 import DonorRegister from "./components/auth/DonorRegister";
@@ -30,6 +28,7 @@ import AdminDashboard from "./components/dashboards/AdminDashboard";
 import NGOManagement from "./components/admin/NGOManagement";
 import UserManagement from "./components/admin/UserManagement";
 import DonationOversight from "./components/admin/DonationOversight";
+import VolunteerOversight from "./components/admin/VolunteerOversight";
 import DonorDashboard from "./components/dashboards/DonorDashboard";
 import VolunteerDashboard from "./components/dashboards/VolunteerDashboard";
 // Import the NGODashboard component
@@ -38,10 +37,12 @@ import CampaignDetail from "./components/campaigns/CampaignDetail";
 import VolunteerEvents from "./components/events/VolunteerEvents";
 import JoinEvent from "./components/events/JoinEvent";
 import Ledger from "./components/transparency/Ledger";
+import TransparencyPage from "./components/transparency/TransparencyPage";
 import UserLogin from "./components/auth/UserLogin";
 import UserRegister from "./components/auth/UserRegister";
 import UserChoice from "./components/auth/UserChoice";
 import DonationPage from "./components/donation/DonationPage";
+import DonationReceipt from "./components/donation/DonationReceipt";
 import VolunteerPage from "./components/volunteer/VolunteerPage";
 import UserDashboard from "./components/dashboards/UserDashboard";
 import ConditionalNavbar from "./components/ConditionalNavbar";
@@ -59,8 +60,6 @@ function App() {
             {/* Auth Routes */}
             <Route path="/auth/select-login" element={<SelectLogin />} />
             <Route path="/auth/ngo-login" element={<NGOLogin />} />
-            <Route path="/auth/donor-login" element={<DonorLogin />} />
-            <Route path="/auth/volunteer-login" element={<VolunteerLogin />} />
             <Route path="/auth/admin-login" element={<AdminLogin />} />
 
             {/* Registration Routes */}
@@ -136,10 +135,26 @@ function App() {
               }
             />
             <Route
+              path="/admin/volunteer-opportunities"
+              element={
+                <RoleProtectedRoute roles={["ADMIN"]}>
+                  <VolunteerOversight />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/user-management"
               element={
                 <RoleProtectedRoute roles={["ADMIN"]}>
                   <UserManagement />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/donations"
+              element={
+                <RoleProtectedRoute roles={["ADMIN"]}>
+                  <DonationOversight />
                 </RoleProtectedRoute>
               }
             />
@@ -192,6 +207,7 @@ function App() {
             <Route path="/events/join-event" element={<JoinEvent />} />
 
             {/* Transparency Routes */}
+            <Route path="/transparency" element={<TransparencyPage />} />
             <Route path="/transparency/ledger" element={<Ledger />} />
 
             {/* User Management Routes */}
@@ -201,6 +217,7 @@ function App() {
 
             {/* Feature Pages */}
             <Route path="/donate" element={<DonationPage />} />
+            <Route path="/donation-receipt" element={<DonationReceipt />} />
             <Route path="/volunteer" element={<VolunteerPage />} />
 
             {/* User Dashboard */}

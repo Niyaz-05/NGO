@@ -1,62 +1,64 @@
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\dto\FundReportDTO.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\PaymentMethod.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\repository\NGORepository.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\controller\AdminController.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\dto\LoginRequest.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\repository\FundUtilizationReportRepository.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\config\SecurityConfig.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\UrgencyLevel.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\config\AppConfig.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\controller\DonationController.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\NGO.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\repository\NGOVerificationRequestRepository.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\util\JwtUtil.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\repository\DonationRepository.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\service\DonationService.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\controller\NGOController.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\repository\FundReportRepository.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\UserType.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\repository\UserRepository.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\ApplicationStatus.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\dto\DonationDTO.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\Donation.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\PlatformStatistics.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\repository\VolunteerApplicationRepository.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\VolunteerOpportunity.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\FundReport.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\dto\JwtResponse.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\service\AdminService.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\dto\NGODonationResponse.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\SystemAlert.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\config\EmailConfig.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\service\UserDetailsServiceImpl.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\NGOVerificationRequest.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\service\UserService.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\dto\VolunteerOpportunityDTO.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\DonationStatus.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\FundUtilizationReport.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\dto\ApplicationRequest.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\repository\PlatformStatisticsRepository.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\NgoConnectBackendApplication.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\repository\SystemAlertRepository.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\dto\AdminDashboardDTO.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\service\ApplicationService.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\dto\NGODTO.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\dto\ApplicationResponse.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\OpportunityStatus.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\controller\FundReportController.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\service\VolunteerService.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\controller\OpportunityController.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\VolunteerApplication.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\dto\RegisterRequest.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\security\JwtAuthenticationEntryPoint.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\controller\VolunteerApplicationController.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\filter\JwtRequestFilter.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\exception\ResourceNotFoundException.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\User.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\config\ModelMapperConfig.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\controller\AuthController.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\entity\NGOStatus.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\repository\VolunteerOpportunityRepository.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\security\JwtAuthenticationFilter.java
-E:\Brave Downloads\NGO Connect App (2)\NGO Connect App\ngo-connect-backend\src\main\java\com\ngoconnect\service\EmailService.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\controller\DonationController.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\VolunteerApplication.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\VolunteerOpportunity.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\repository\DonationRepository.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\User.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\NgoConnectBackendApplication.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\DonationStatus.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\SystemAlert.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\FundReport.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\controller\VolunteerApplicationController.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\dto\ApplicationResponse.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\Donation.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\PaymentMethod.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\NGOStatus.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\OpportunityStatus.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\dto\DonationDTO.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\util\JwtUtil.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\dto\AdminDashboardDTO.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\controller\DatabaseFixController.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\controller\FundReportController.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\dto\JwtResponse.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\controller\AuthController.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\UrgencyLevel.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\config\AppConfig.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\config\ModelMapperConfig.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\NGO.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\repository\NGORepository.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\dto\FundReportDTO.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\NGOVerificationRequest.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\config\EmailConfig.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\filter\JwtRequestFilter.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\service\AdminService.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\dto\LoginRequest.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\UserType.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\service\VolunteerService.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\dto\ApplicationRequest.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\repository\SystemAlertRepository.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\repository\VolunteerOpportunityRepository.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\repository\FundUtilizationReportRepository.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\controller\NGOController.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\security\JwtAuthenticationEntryPoint.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\repository\PlatformStatisticsRepository.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\service\UserService.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\config\DatabaseInitializer.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\repository\UserRepository.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\dto\NGODonationResponse.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\controller\OpportunityController.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\service\DonationService.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\repository\VolunteerApplicationRepository.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\config\SecurityConfig.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\repository\NGOVerificationRequestRepository.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\exception\ResourceNotFoundException.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\controller\AdminController.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\repository\FundReportRepository.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\dto\RegisterRequest.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\dto\VolunteerOpportunityDTO.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\PlatformStatistics.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\service\ApplicationService.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\ApplicationStatus.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\dto\NGODTO.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\entity\FundUtilizationReport.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\security\JwtAuthenticationFilter.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\service\EmailService.java
+E:\Suprazo\zip\NGO Connect App - Copy\ngo-connect-backend\src\main\java\com\ngoconnect\service\UserDetailsServiceImpl.java

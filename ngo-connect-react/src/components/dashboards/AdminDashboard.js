@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import DonationOversight from "../admin/DonationOversight";
-import VolunteerOversight from "../admin/VolunteerOversight";
-import UserManagement from "../admin/UserManagement";
+import AdminNavigation from "../admin/AdminNavigation";
 
 const AdminDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -157,10 +155,10 @@ const AdminDashboard = () => {
   };
 
   const formatCurrency = (amount) => {
-    if (!amount) return "$0.00";
-    return new Intl.NumberFormat("en-US", {
+    if (!amount) return "₹0.00";
+    return new Intl.NumberFormat("en-IN", {
       style: "currency",
-      currency: "USD",
+      currency: "INR",
     }).format(amount);
   };
 
@@ -221,6 +219,9 @@ const AdminDashboard = () => {
           Refresh
         </button>
       </div>
+
+      {/* Navigation Tabs */}
+      <AdminNavigation />
 
       {/* Overview Statistics */}
       <div className="row mb-4">
@@ -518,27 +519,6 @@ const AdminDashboard = () => {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* User Management Section */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <UserManagement />
-        </div>
-      </div>
-
-      {/* ADD THE NEW DONATION OVERSIGHT SECTION HERE */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <DonationOversight />
-        </div>
-      </div>
-
-      {/* ADD THE NEW VOLUNTEER OVERSIGHT SECTION HERE */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <VolunteerOversight />
         </div>
       </div>
 

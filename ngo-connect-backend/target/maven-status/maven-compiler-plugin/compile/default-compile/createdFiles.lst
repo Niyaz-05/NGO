@@ -16,8 +16,10 @@ com\ngoconnect\config\EmailConfig.class
 com\ngoconnect\dto\RegisterRequest.class
 com\ngoconnect\entity\UserType.class
 com\ngoconnect\entity\NGOStatus.class
+com\ngoconnect\config\DatabaseInitializer.class
 com\ngoconnect\entity\User.class
 com\ngoconnect\repository\FundReportRepository.class
+com\ngoconnect\controller\DatabaseFixController.class
 com\ngoconnect\dto\VolunteerOpportunityDTO.class
 com\ngoconnect\dto\LoginRequest.class
 com\ngoconnect\security\JwtAuthenticationFilter.class

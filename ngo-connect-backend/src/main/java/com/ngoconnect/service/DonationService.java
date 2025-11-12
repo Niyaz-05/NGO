@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.ngoconnect.entity.DonationStatus;
@@ -29,6 +30,22 @@ import org.slf4j.LoggerFactory;
 @Service
 @RequiredArgsConstructor
 public class DonationService {
+    // ModelMapper configuration to skip donor fields in DTO mapping
+    @javax.annotation.PostConstruct
+    private void configureModelMapper() {
+        if (modelMapper != null) {
+            org.modelmapper.TypeMap<com.ngoconnect.entity.Donation, com.ngoconnect.dto.DonationDTO> typeMap =
+                modelMapper.getTypeMap(com.ngoconnect.entity.Donation.class, com.ngoconnect.dto.DonationDTO.class);
+            if (typeMap == null) {
+                typeMap = modelMapper.createTypeMap(com.ngoconnect.entity.Donation.class, com.ngoconnect.dto.DonationDTO.class);
+            }
+            typeMap.addMappings(mapper -> {
+                mapper.skip(com.ngoconnect.dto.DonationDTO::setDonorName);
+                mapper.skip(com.ngoconnect.dto.DonationDTO::setDonorEmail);
+                mapper.skip(com.ngoconnect.dto.DonationDTO::setUserId);
+            });
+        }
+    }
     private static final Logger logger = LoggerFactory.getLogger(DonationService.class);
 
     private final DonationRepository donationRepository;
@@ -237,14 +254,21 @@ public class DonationService {
                 dto.setDonorEmail(donation.getDonor().getEmail());
             }
 
+            // Handle NGO with extra error checking for status enum mapping
             if (donation.getNgo() != null) {
-                dto.setNgoId(donation.getNgo().getId());
+                try {
+                    dto.setNgoId(donation.getNgo().getId());
 
-                // Only include basic NGO info in the DTO
-                NGODTO ngoDTO = new NGODTO();
-                ngoDTO.setId(donation.getNgo().getId());
-                ngoDTO.setOrganizationName(donation.getNgo().getOrganizationName());
-                dto.setNgo(ngoDTO);
+                    // Only include basic NGO info in the DTO
+                    NGODTO ngoDTO = new NGODTO();
+                    ngoDTO.setId(donation.getNgo().getId());
+                    ngoDTO.setOrganizationName(donation.getNgo().getOrganizationName());
+                    dto.setNgo(ngoDTO);
+                } catch (Exception ngoError) {
+                    logger.error("Error processing NGO for donation ID {}: {}",
+                            donation.getId(), ngoError.getMessage());
+                    // Continue without NGO info rather than failing completely
+                }
             }
 
             // Ensure enum values are properly set
@@ -265,5 +289,46 @@ public class DonationService {
      */
     public DonationDTO convertToDto(Donation donation) {
         return convertToDTO(donation);
+    }
+
+    @Transactional
+    public DonationDTO processDummyDonation(DonationDTO donationDTO, Long userId) {
+        // 1. Find the user and NGO from the database
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+        NGO ngo = ngoRepository.findById(donationDTO.getNgoId())
+                .orElseThrow(() -> new RuntimeException("NGO not found with id: " + donationDTO.getNgoId()));
+
+        // 2. Create a new Donation entity
+        Donation donation = new Donation();
+        donation.setDonor(user);
+        donation.setNgo(ngo);
+        donation.setAmount(donationDTO.getAmount());
+        donation.setPaymentMethod(donationDTO.getPaymentMethod());
+
+        // Set pledge type if available
+        if (donationDTO.getPledgeType() != null) {
+            try {
+                donation.setPledgeType(Donation.PledgeType.valueOf(donationDTO.getPledgeType().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                donation.setPledgeType(Donation.PledgeType.ONE_TIME);
+            }
+        }
+
+        // 3. This is the "dummy payment" part:
+        // We immediately mark it as completed and generate a fake transaction ID
+        donation.setStatus(DonationStatus.COMPLETED);
+        donation.setTransactionId("DUMMY-" + UUID.randomUUID().toString()); // Create a unique, fake ID
+        donation.setDonationDate(LocalDateTime.now());
+
+        // 4. Save the completed donation to the database
+        Donation savedDonation = donationRepository.save(donation);
+
+        // 5. Update the NGO's total donations
+        ngo.setTotalDonations(ngo.getTotalDonations() + savedDonation.getAmount());
+        ngoRepository.save(ngo);
+
+        // 6. Return the details of the created donation (this is the "receipt")
+        return convertToDto(savedDonation);
     }
 }

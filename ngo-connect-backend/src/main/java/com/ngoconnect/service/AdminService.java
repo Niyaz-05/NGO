@@ -7,17 +7,45 @@ import com.ngoconnect.entity.Donation;
 import com.ngoconnect.repository.*;
 import com.ngoconnect.repository.DonationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import org.springframework.data.domain.Sort;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 
 @Service
 public class AdminService {
+
+    @PostConstruct
+    public void init() {
+        System.out.println("=== AdminService initialized successfully ===");
+    }
+
+    // Getter for testing
+    public VolunteerOpportunityRepository getVolunteerOpportunityRepository() {
+        return volunteerOpportunityRepository;
+    }
+
+    // Simple test method to check database connectivity
+    public String testVolunteerOpportunityAccess() {
+        try {
+            System.out.println("=== Testing volunteer opportunity database access ===");
+            long count = volunteerOpportunityRepository.count();
+            System.out.println("Database count query returned: " + count);
+            return "Database accessible. Found " + count + " volunteer opportunities.";
+        } catch (Exception e) {
+            System.err.println("Database access error: " + e.getMessage());
+            e.printStackTrace();
+            return "Database error: " + e.getMessage();
+        }
+    }
 
     @Autowired
     private NGOVerificationRequestRepository verificationRequestRepository;
@@ -42,6 +70,12 @@ public class AdminService {
 
     @Autowired
     private VolunteerOpportunityRepository volunteerOpportunityRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /**
      * Get comprehensive admin dashboard data
@@ -95,15 +129,29 @@ public class AdminService {
     private AdminDashboardDTO.DashboardOverview calculateRealTimeStatistics() {
         AdminDashboardDTO.DashboardOverview overview = new AdminDashboardDTO.DashboardOverview();
 
-        // NGO statistics
-        Long totalNgos = ngoRepository.count();
-        Long verifiedNgos = ngoRepository.countByIsVerified(true);
-        Long pendingNgos = verificationRequestRepository
-                .countByStatus(NGOVerificationRequest.VerificationStatus.PENDING);
+        // Initialize variables with defaults
+        Long totalNgos = 0L;
+        Long verifiedNgos = 0L;
+        Long pendingNgos = 0L;
 
-        overview.setTotalNgosRegistered(totalNgos.intValue());
-        overview.setTotalNgosVerified(verifiedNgos.intValue());
-        overview.setTotalNgosPending(pendingNgos.intValue());
+        try {
+            // NGO statistics using native SQL to avoid enum mapping issues
+            totalNgos = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM ngos", Long.class);
+            verifiedNgos = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM ngos WHERE is_verified = true",
+                    Long.class);
+            pendingNgos = verificationRequestRepository
+                    .countByStatus(NGOVerificationRequest.VerificationStatus.PENDING);
+
+            overview.setTotalNgosRegistered(totalNgos.intValue());
+            overview.setTotalNgosVerified(verifiedNgos.intValue());
+            overview.setTotalNgosPending(pendingNgos.intValue());
+        } catch (Exception e) {
+            System.err.println("Error calculating NGO statistics: " + e.getMessage());
+            // Set default values if there's an error
+            overview.setTotalNgosRegistered(0);
+            overview.setTotalNgosVerified(0);
+            overview.setTotalNgosPending(0);
+        }
 
         // User statistics
         Long totalUsers = userRepository.count();
@@ -138,7 +186,6 @@ public class AdminService {
         overview.setActiveVolunteerOpportunities(activeOpportunities.intValue());
 
         // Alert statistics
-        Long unresolvedAlerts = systemAlertRepository.countUnresolvedAlerts();
         overview.setPendingVerifications(pendingNgos.intValue());
         overview.setMissingFundReports(getMissingFundReportsCount()); // Calculate from fund reports
         overview.setSuspiciousActivities(
@@ -186,6 +233,81 @@ public class AdminService {
     @Transactional(readOnly = true)
     public List<VolunteerOpportunity> getPendingOpportunities() {
         return volunteerOpportunityRepository.findByStatus(OpportunityStatus.PENDING_APPROVAL);
+    }
+
+    /**
+     * Admin: Get all volunteer opportunities
+     */
+    @Transactional(readOnly = true)
+    public List<VolunteerOpportunity> getAllVolunteerOpportunities() {
+        try {
+            System.out.println("=== Starting getAllVolunteerOpportunities method ===");
+
+            // First, test basic repository access
+            long count = volunteerOpportunityRepository.count();
+            System.out.println("Total volunteer opportunities count: " + count);
+
+            if (count == 0) {
+                System.out.println("No volunteer opportunities found in database");
+                return new ArrayList<>();
+            }
+
+            // Try to get all opportunities
+            List<VolunteerOpportunity> opportunities = volunteerOpportunityRepository.findAll();
+            System.out.println(
+                    "Successfully retrieved " + opportunities.size() + " volunteer opportunities from repository");
+
+            // Process each opportunity individually to catch problematic ones
+            List<VolunteerOpportunity> validOpportunities = new ArrayList<>();
+            for (int i = 0; i < opportunities.size(); i++) {
+                VolunteerOpportunity opp = opportunities.get(i);
+                try {
+                    System.out.println("Processing opportunity " + (i + 1) + "/" + opportunities.size());
+                    System.out.println("  ID: " + opp.getId());
+                    System.out.println("  Title: " + (opp.getTitle() != null ? opp.getTitle() : "NULL"));
+                    System.out.println("  Status: " + (opp.getStatus() != null ? opp.getStatus() : "NULL"));
+
+                    // Test NGO relationship carefully
+                    if (opp.getNgo() != null) {
+                        try {
+                            String ngoName = opp.getNgo().getOrganizationName();
+                            Long ngoId = opp.getNgo().getId();
+                            System.out.println("  NGO: " + ngoName + " (ID: " + ngoId + ")");
+                        } catch (Exception ngoError) {
+                            System.err.println("  ERROR accessing NGO data: " + ngoError.getMessage());
+                            // Continue processing but note the error
+                        }
+                    } else {
+                        System.out.println("  NGO: null");
+                    }
+
+                    // Test other critical fields
+                    System.out.println("  Location: " + (opp.getLocation() != null ? opp.getLocation() : "NULL"));
+                    System.out.println("  Cause: " + (opp.getCause() != null ? opp.getCause() : "NULL"));
+                    System.out.println("  Created: " + opp.getCreatedAt());
+
+                    validOpportunities.add(opp);
+                    System.out.println("  ✓ Opportunity processed successfully");
+
+                } catch (Exception oppError) {
+                    System.err.println("ERROR processing opportunity " + (i + 1) + " (ID: " +
+                            (opp.getId() != null ? opp.getId() : "unknown") + "): " + oppError.getMessage());
+                    oppError.printStackTrace();
+                    // Skip this opportunity and continue with others
+                }
+            }
+
+            System.out.println("=== Completed processing. Valid opportunities: " + validOpportunities.size() + "/"
+                    + opportunities.size() + " ===");
+            return validOpportunities;
+
+        } catch (Exception e) {
+            System.err.println("=== ERROR in getAllVolunteerOpportunities ===");
+            System.err.println("Error type: " + e.getClass().getSimpleName());
+            System.err.println("Error message: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     /**
@@ -402,7 +524,7 @@ public class AdminService {
             if (ngo.getStatus() == null) {
                 // Set status based on isVerified field
                 if (ngo.getIsVerified()) {
-                    ngo.setStatus(NGOStatus.ACTIVE);
+                    ngo.setStatus(NGOStatus.APPROVED);
                 } else {
                     ngo.setStatus(NGOStatus.PENDING);
                 }
@@ -1034,10 +1156,79 @@ public class AdminService {
      */
     @Transactional(readOnly = true)
     public List<DonationDTO> getAllDonations() {
-        List<Donation> donations = donationRepository.findAll();
-        return donations.stream()
-                .map(donationService::convertToDto)
-                .collect(Collectors.toList());
+        try {
+            List<Donation> donations = donationRepository.findAll();
+            System.out.println("Found " + donations.size() + " donations");
+
+            List<DonationDTO> result = new ArrayList<>();
+            for (Donation donation : donations) {
+                try {
+                    // Manual conversion to avoid ModelMapper issues
+                    DonationDTO dto = createDonationDTOManually(donation);
+                    result.add(dto);
+                } catch (Exception e) {
+                    System.err.println("Error converting donation ID " + donation.getId() + ": " + e.getMessage());
+                    e.printStackTrace();
+                    // Skip this donation but continue with others
+                }
+            }
+
+            System.out.println("Successfully converted " + result.size() + " donations to DTOs");
+            return result;
+        } catch (Exception e) {
+            System.err.println("Error in getAllDonations: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    /**
+     * Manual DTO conversion to avoid ModelMapper issues
+     */
+    private DonationDTO createDonationDTOManually(Donation donation) {
+        if (donation == null) {
+            return null;
+        }
+
+        DonationDTO dto = new DonationDTO();
+
+        // Basic fields
+        dto.setId(donation.getId());
+        dto.setAmount(donation.getAmount());
+        dto.setDonationDate(donation.getDonationDate());
+        dto.setDonorMessage(donation.getDonorMessage());
+        dto.setTransactionId(donation.getTransactionId());
+        dto.setCreatedAt(donation.getCreatedAt());
+        dto.setUpdatedAt(donation.getUpdatedAt());
+
+        // Handle enums safely - use the actual enum types
+        dto.setPaymentMethod(donation.getPaymentMethod());
+        dto.setStatus(donation.getStatus());
+
+        // Handle pledge type as string
+        if (donation.getPledgeType() != null) {
+            dto.setPledgeType(donation.getPledgeType().name());
+        }
+
+        // Handle donor safely
+        if (donation.getDonor() != null) {
+            dto.setUserId(donation.getDonor().getId());
+            dto.setDonorName(donation.getDonor().getFullName());
+            dto.setDonorEmail(donation.getDonor().getEmail());
+        }
+
+        // Handle NGO safely
+        if (donation.getNgo() != null) {
+            dto.setNgoId(donation.getNgo().getId());
+
+            // Create a simple NGO DTO
+            com.ngoconnect.dto.NGODTO ngoDTO = new com.ngoconnect.dto.NGODTO();
+            ngoDTO.setId(donation.getNgo().getId());
+            ngoDTO.setOrganizationName(donation.getNgo().getOrganizationName());
+            dto.setNgo(ngoDTO);
+        }
+
+        return dto;
     }
 
     /**

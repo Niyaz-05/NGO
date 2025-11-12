@@ -56,7 +56,7 @@ const CreateFundReport = ({ ngoId, onReportCreated }) => {
             />
           </div>
           <div className="mb-3">
-            <label className="form-label">Total Funds Received ($)</label>
+            <label className="form-label">Total Funds Received (₹)</label>
             <input
               type="number"
               step="0.01"
@@ -67,7 +67,7 @@ const CreateFundReport = ({ ngoId, onReportCreated }) => {
             />
           </div>
           <div className="mb-3">
-            <label className="form-label">Total Funds Spent ($)</label>
+            <label className="form-label">Total Funds Spent (₹)</label>
             <input
               type="number"
               step="0.01"
@@ -82,7 +82,7 @@ const CreateFundReport = ({ ngoId, onReportCreated }) => {
             <textarea
               className="form-control"
               rows="4"
-              placeholder="e.g., Education: $5000, Health Camps: $3000, Admin: $1000"
+              placeholder="e.g., Education: ₹5000, Health Camps: ₹3000, Admin: ₹1000"
               value={breakdown}
               onChange={(e) => setBreakdown(e.target.value)}
               required

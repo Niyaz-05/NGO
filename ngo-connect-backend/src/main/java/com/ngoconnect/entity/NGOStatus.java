@@ -2,7 +2,7 @@ package com.ngoconnect.entity;
 
 public enum NGOStatus {
     PENDING,
-    ACTIVE,
+    APPROVED,
     SUSPENDED,
     DEACTIVATED,
     REJECTED

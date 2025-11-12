@@ -51,7 +51,9 @@ public class SecurityConfig {
                 .cors().and()
                 .csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/api/auth/**", "/api/ngos/**", "/api/transparency/**", "/public/**").permitAll()
+                .antMatchers("/api/auth/**", "/api/ngos/**", "/api/transparency/**", "/public/**",
+                        "/api/admin/fix-ngo-status")
+                .permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);

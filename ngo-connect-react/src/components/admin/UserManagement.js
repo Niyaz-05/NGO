@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import AdminNavigation from "./AdminNavigation";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -246,6 +247,9 @@ const UserManagement = () => {
           </button>
         </div>
       </div>
+
+      {/* Navigation */}
+      <AdminNavigation />
 
       {/* Filters */}
       <div className="row mb-4">

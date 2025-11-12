@@ -183,6 +183,7 @@ public class NGOController {
     public ResponseEntity<?> updateNGO(@PathVariable Long id, @RequestBody NGO update) {
         return ngoRepository.findById(id)
                 .map(existing -> {
+                    // Update fields
                     existing.setOrganizationName(update.getOrganizationName());
                     existing.setRegistrationNumber(update.getRegistrationNumber());
                     existing.setDescription(update.getDescription());
@@ -197,13 +198,31 @@ public class NGOController {
                     existing.setInstagramUrl(update.getInstagramUrl());
                     existing.setLinkedinUrl(update.getLinkedinUrl());
                     existing.setCauses(update.getCauses());
-                    if (update.getCause() != null && !update.getCause().isBlank()) {
-                        existing.setCause(update.getCause());
-                    } else if (update.getCauses() != null && !update.getCauses().isEmpty()) {
-                        existing.setCause(update.getCauses().get(0));
+
+                    // Field defaulting/validation (same as createNGO)
+                    if (existing.getOrganizationName() == null || existing.getOrganizationName().isBlank()) {
+                        return ResponseEntity.badRequest().body(Map.of("error", "NGO Name is required"));
                     }
+                    if (existing.getDescription() == null || existing.getDescription().isBlank()) {
+                        existing.setDescription("N/A");
+                    }
+                    if (existing.getLocation() == null || existing.getLocation().isBlank()) {
+                        existing.setLocation("Unknown");
+                    }
+                    // Backward compatibility: ensure primary cause is set if multiple causes provided
+                    if ((update.getCause() == null || update.getCause().isBlank())) {
+                        if (update.getCauses() != null && !update.getCauses().isEmpty()) {
+                            existing.setCause(update.getCauses().get(0));
+                        } else {
+                            existing.setCause("General");
+                        }
+                    } else {
+                        existing.setCause(update.getCause());
+                    }
+                    // registrationNumber optional; no validation required
+
                     NGO saved = ngoRepository.save(existing);
-                    return ResponseEntity.ok(saved);
+                    return ResponseEntity.ok(NGODTO.fromEntity(saved));
                 })
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

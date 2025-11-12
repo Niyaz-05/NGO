@@ -134,6 +134,7 @@ const NGODashboard = () => {
       if (ngoResponse.status === 200 && ngoResponse.data) {
         const ngoData = ngoResponse.data;
         const profileData = {
+          id: ngoData.id, // <-- Ensure id is set
           name: ngoData.organizationName || "",
           email: ngoData.email || storedUser.email || "",
           phone: ngoData.phone || "",
