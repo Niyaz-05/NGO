@@ -1,0 +1,18 @@
+# Secrets / local config
+.env
+.env.*
+!.env.example
+application-local.properties
+
+# Build output
+target/
+build/
+dist/
+
+# Dependencies
+node_modules/
+
+# IDE / OS
+.idea/
+*.iml
+.DS_Store
